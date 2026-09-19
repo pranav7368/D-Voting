@@ -18,3 +18,6 @@ Thumbs.db
 
 # Local dev workspace: generated keys, chain files, polling cards
 .local/
+
+# Local educational notes; keep the public repository English-first
+PROJECT-GUIDE-HINGLISH.md
