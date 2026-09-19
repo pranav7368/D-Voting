@@ -1,0 +1,129 @@
+/* Trustee console. Deliberately its own small stylesheet: this page is served
+   by the trustee's machine, not the ballot box, and shares nothing with it. */
+
+:root {
+  --bg: #0f1115;
+  --card: #171a21;
+  --line: #262b36;
+  --ink: #e8eaed;
+  --muted: #9aa3b2;
+  --accent: #6ea8fe;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1rem 4rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main { max-width: 46rem; margin: 0 auto; }
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+h1 { font-size: 1.4rem; margin: 0; }
+
+.tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.lede { color: var(--muted); margin: 0 0 1.5rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.card.subtle { background: transparent; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.phase {
+  font-size: 0.8rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.phase.ready { color: var(--warn); border-color: var(--warn); }
+.phase.done { color: var(--ok); border-color: var(--ok); }
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  background: #0c0e12;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  font: inherit;
+  margin-bottom: 0.8rem;
+}
+
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+button.action {
+  padding: 0.55rem 1rem;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #222735;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+button.action:hover:not(:disabled) { border-color: var(--accent); }
+button.action:disabled { opacity: 0.5; cursor: not-allowed; }
+button.action.primary { background: #1d3a6b; border-color: #2f5ca8; }
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.92rem;
+}
+
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+
+.note { color: var(--muted); font-size: 0.88rem; }
+
+.msg { min-height: 1.2rem; font-size: 0.9rem; margin: 0.7rem 0 0; }
+.msg.ok { color: var(--ok); }
+.msg.bad { color: var(--bad); }
+.msg.busy { color: var(--muted); }
+
+.checks, .plain { margin: 0.8rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; }
+.checks li { color: var(--ok); margin-bottom: 0.25rem; }
+.plain li { color: var(--muted); margin-bottom: 0.25rem; }

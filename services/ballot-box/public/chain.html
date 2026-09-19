@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D-Voting - Chain Explorer</title>
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="election-name">Chain Explorer</h1>
+    <span class="tag">D-Voting</span>
+    <nav>
+      <button data-href="/vote">Vote</button>
+      <button data-href="/verify">Verify</button>
+      <button data-href="/results">Results</button>
+      <button aria-current="true">Chain</button>
+    </nav>
+  </header>
+
+  <p class="lede">
+    Every block below was downloaded from this server and then re-checked
+    <strong>in your browser</strong> — its hash recomputed from scratch, its
+    link to the block before it recomputed from scratch, and every validator
+    signature re-verified against the published validator set. Nothing here is
+    the server's word for it.
+  </p>
+
+  <div id="loading" class="card">Loading the chain…</div>
+  <div id="error" class="card" hidden></div>
+
+  <div id="content" hidden>
+    <div class="card raised">
+      <div class="verdict" id="verdict"></div>
+      <dl class="facts mt-2" id="summary-facts"></dl>
+      <div class="row mt-2">
+        <button id="refresh" class="action secondary">Refresh</button>
+        <button id="download" class="action secondary">Download full chain (JSON)</button>
+      </div>
+    </div>
+
+    <div id="ceremony-card" class="card" hidden>
+      <strong>Decryption ceremony</strong>
+      <p class="hint mt-1" id="ceremony-text"></p>
+      <div class="pills mt-1" id="ceremony-pills"></div>
+    </div>
+
+    <h3>The chain, block by block</h3>
+    <p class="hint">
+      Genesis first. Click any block to see exactly what it contains — nothing
+      is hidden, but a cast ballot's content stays encrypted here just as it
+      does everywhere else in this system.
+    </p>
+
+    <div id="chain-track"></div>
+  </div>
+</main>
+
+<script type="module" src="/chain-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "@dvoting/registration-authority",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Registration Authority: verifies voter identity and issues one blind-signed anonymous credential per verified voter.",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "keygen": "node src/scripts/generate-issuer-key.ts",
+    "db:migrate": "node src/scripts/migrate.ts",
+    "roll:import": "node src/scripts/import-roll.ts"
+  },
+  "dependencies": {
+    "@dvoting/crypto": "*",
+    "@hono/node-server": "^2.1.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.1",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@dvoting/validator-node",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A single validator authority: holds one signing key, keeps its own chain replica, and independently validates every block before attesting.",
+  "scripts": {
+    "start": "node src/server.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "keygen": "node src/scripts/generate-validator-key.ts"
+  },
+  "dependencies": {
+    "@dvoting/crypto": "*",
+    "@dvoting/ledger": "*",
+    "@hono/node-server": "^2.1.0",
+    "hono": "^4.13.1",
+    "zod": "^3.24.1"
+  }
+}

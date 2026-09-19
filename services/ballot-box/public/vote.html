@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D-Voting - Cast your vote</title>
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="election-name">Loading...</h1>
+    <span class="tag">D-Voting</span>
+    <nav>
+      <button aria-current="true">Vote</button>
+      <button data-href="/verify">Verify</button>
+      <button data-href="/results">Results</button>
+      <button data-href="/chain">Chain</button>
+    </nav>
+  </header>
+
+  <div class="rail">
+    <span id="rail-identify">1 &middot; Identify</span>
+    <span id="rail-choose">2 &middot; Choose</span>
+    <span id="rail-confirm">3 &middot; Confirm</span>
+    <span id="rail-done">4 &middot; Receipt</span>
+  </div>
+
+  <!-- STEP 1 ------------------------------------------------------------- -->
+  <section id="stage-identify">
+    <h2>Prove you are on the electoral roll</h2>
+    <p class="lede">Enter the details from your polling card.</p>
+
+    <div class="card">
+      <div class="field">
+        <label for="rollId">Roll number</label>
+        <input id="rollId" type="text" autocomplete="off" spellcheck="false" placeholder="R-100001" />
+      </div>
+      <div class="field">
+        <label for="code">Enrolment code
+          <span class="hint">&mdash; dashes, spaces and case do not matter</span></label>
+        <input id="code" type="text" autocomplete="off" spellcheck="false"
+               placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XX" />
+      </div>
+      <button id="register" class="action" data-label="Continue">Continue</button>
+      <div id="identify-msg"></div>
+    </div>
+
+    <div class="card raised">
+      <h3 class="mt-0">This election</h3>
+      <dl class="facts" id="election-facts"></dl>
+    </div>
+
+    <p class="note">
+      Your polling card proves eligibility. The registration service then signs a
+      credential <em>without being able to see it</em>, so it cannot connect you
+      to the ballot you cast. That is a mathematical property, not a promise.
+    </p>
+
+    <p class="note strong">
+      <strong>Stay on this tab until you have cast a ballot.</strong> Your
+      credential lives only in this tab's memory, never on disk — closing or
+      reloading loses it, and a polling card can only ever be used to obtain
+      <strong>one</strong> credential. If that happens, you will need a fresh
+      polling card to try again.
+    </p>
+  </section>
+
+  <!-- STEP 2 ------------------------------------------------------------- -->
+  <section id="stage-choose" hidden>
+    <h2>Choose your candidate</h2>
+    <p class="lede">Your choice is encrypted on this device before anything is sent.</p>
+
+    <div class="card">
+      <div class="choices" id="choices"></div>
+      <div class="row end">
+        <button id="prepare" class="action" data-label="Prepare my ballot">Prepare my ballot</button>
+      </div>
+      <div id="choose-msg"></div>
+    </div>
+
+    <p class="note">
+      Nothing has been sent yet. The next step encrypts your ballot here in the
+      browser and shows you a fingerprint of it, <em>before</em> you decide
+      whether to cast it or check it.
+    </p>
+  </section>
+
+  <!-- STEP 3 ------------------------------------------------------------- -->
+  <section id="stage-confirm" hidden>
+    <h2>Cast it, or check it first</h2>
+    <p class="lede">
+      Your ballot is encrypted and locked to the fingerprint below. Because this
+      app committed to it <em>before</em> you chose, it cannot cheat and get away
+      with it.
+    </p>
+
+    <div class="card">
+      <label>Ballot fingerprint</label>
+      <div class="tracking mono" id="commitment"></div>
+      <p class="hint" id="chosen-summary"></p>
+
+      <div class="row mt-2">
+        <button id="cast" class="action" data-label="Cast this ballot">Cast this ballot</button>
+        <button id="audit" class="action secondary" data-label="Check it instead">Check it instead</button>
+      </div>
+      <div id="confirm-msg"></div>
+    </div>
+
+    <p class="note strong">
+      <strong>Checking spoils this ballot.</strong> To prove it encrypted your real
+      choice, the app must reveal the secret that unlocks it, so it can never be
+      counted. You will then start again with a fresh one. Check as many times as
+      you like; a dishonest app cannot know which attempt you will check.
+    </p>
+  </section>
+
+  <!-- STEP 4 ------------------------------------------------------------- -->
+  <section id="stage-done" hidden>
+    <h2>Your ballot is cast</h2>
+    <p class="lede">Keep this tracking code. It proves your ballot is in the record.</p>
+
+    <div class="card">
+      <label>Tracking code</label>
+      <div class="tracking" id="tracking"></div>
+      <div class="row">
+        <button id="copy" class="action secondary" data-label="Copy">Copy</button>
+        <button id="goverify" class="action" data-label="Verify it now">Verify it now</button>
+      </div>
+      <div id="done-msg"></div>
+    </div>
+
+    <p class="note">
+      The code reveals <em>that</em> you voted, never <em>how</em>. Anyone can
+      look it up; nobody can read it. Your vote can only be decrypted as part of
+      the final total, and only when a quorum of trustees cooperate.
+    </p>
+
+    <div class="card raised mt-2">
+      <h3 class="mt-0">Voted under pressure?</h3>
+      <p class="hint">
+        If someone made you cast that vote, you can cast another one right now,
+        while your credential is still in this tab. Only your <strong>last</strong>
+        ballot is counted — this one silently replaces it. Leave this page and the
+        credential is gone; only you decide whether to use it again.
+      </p>
+      <button id="revote" class="action secondary" data-label="Vote again with this credential">Vote again with this credential</button>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="/vote-page.js"></script>
+</body>
+</html>
