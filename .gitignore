@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+
+# Secrets. The issuer private key must never be committed.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.log
+
+# Local dev workspace: generated keys, chain files, polling cards
+.local/

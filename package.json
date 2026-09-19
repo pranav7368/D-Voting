@@ -1,0 +1,31 @@
+{
+  "name": "d-voting",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end verifiable e-voting with a permissioned blockchain audit layer",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "registration:keygen": "npm run keygen --workspace @dvoting/registration-authority",
+    "registration:dev": "npm run dev --workspace @dvoting/registration-authority",
+    "dev": "node scripts/dev-up.ts",
+    "build:web": "node scripts/build-web.ts",
+    "demo": "node services/ballot-box/src/scripts/full-election-demo.ts",
+    "bench": "node packages/crypto/bench/election-bench.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "esbuild": "0.28.1",
+    "typescript": "^5.7.2"
+  }
+}

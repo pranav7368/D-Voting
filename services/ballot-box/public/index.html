@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D-Voting - Verify your ballot</title>
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<main>
+  <header>
+    <h1>Verify your ballot</h1>
+    <span class="tag">D-Voting</span>
+    <nav>
+      <button data-href="/vote">Vote</button>
+      <button aria-current="true">Verify</button>
+      <button data-href="/results">Results</button>
+      <button data-href="/chain">Chain</button>
+    </nav>
+  </header>
+
+  <p class="lede">
+    Checks run entirely in your browser. Nothing this server says is taken on trust.
+  </p>
+
+  <div class="card" id="election-card"><span class="spinner"></span>Loading election...</div>
+
+  <div class="card">
+    <div class="field">
+      <label for="tracking">Your tracking code</label>
+      <input id="tracking" type="text" autocomplete="off" spellcheck="false"
+             placeholder="e.g. fF7F7L5rwmeCLue8cA44aw" />
+    </div>
+    <button id="check" class="action" data-label="Verify">Verify</button>
+  </div>
+
+  <div id="result"></div>
+
+  <p class="note">
+    Your vote stays secret. This confirms that <em>your ballot is in the record</em>
+    and that the record was signed by a quorum of named authorities. It never
+    decrypts anything. Your browser re-derives the block hash, re-checks each
+    <code>Ed25519</code> signature, and re-walks the Merkle path itself.
+  </p>
+</main>
+
+<script type="module" src="/verify-page.js"></script>
+</body>
+</html>

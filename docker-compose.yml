@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dvoting-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dvoting
+      POSTGRES_PASSWORD: dvoting_dev_only
+      POSTGRES_DB: dvoting
+    ports:
+      - "5433:5432"
+    volumes:
+      - dvoting-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dvoting -d dvoting"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dvoting-pgdata:

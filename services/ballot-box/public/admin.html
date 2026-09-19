@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D-Voting - Election administration</title>
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<main>
+  <header>
+    <h1>Election administration</h1>
+    <span class="tag">D-Voting</span>
+    <nav>
+      <button data-href="/vote">Vote</button>
+      <button data-href="/verify">Verify</button>
+      <button data-href="/results">Results</button>
+      <button data-href="/chain">Chain</button>
+    </nav>
+  </header>
+
+  <p class="lede">
+    Compose the election, manage the roll, open and close the poll. This console
+    cannot decrypt, count, or alter a single ballot.
+  </p>
+
+  <div class="card" id="auth-card">
+    <div class="field">
+      <label for="token">Election commission token
+        <span class="hint">for the ballot box</span></label>
+      <input id="token" type="password" autocomplete="off" spellcheck="false"
+             placeholder="bearer token" />
+    </div>
+    <div class="field">
+      <label for="roll-token">Registration Authority token
+        <span class="hint">optional - only needed to manage the electoral roll</span></label>
+      <input id="roll-token" type="password" autocomplete="off" spellcheck="false"
+             placeholder="roll administration token" />
+    </div>
+    <button id="connect" class="action">Connect</button>
+    <div id="auth-msg"></div>
+  </div>
+
+  <div id="console" hidden>
+    <div class="card">
+      <div class="row">
+        <span>
+          <strong id="election-title">-</strong>
+          <span class="hint" id="election-id-sub"></span>
+        </span>
+        <span class="phase" id="phase">-</span>
+      </div>
+      <dl class="facts mt-2" id="status"></dl>
+      <p class="note mt-2" id="next-step"></p>
+    </div>
+
+    <!-- ============ SETUP ============ -->
+    <section id="setup" hidden>
+      <div class="card">
+        <h2>1. The ballot</h2>
+        <p class="hint">
+          The name is prose for a header - nothing verifies against it. The
+          election id below is what every proof and every check is bound to,
+          and it never changes.
+        </p>
+        <div class="field mt-2">
+          <label for="election-name">Official name
+            <span class="hint">optional - e.g. "General Election 2026"</span></label>
+          <input id="election-name" type="text" spellcheck="false" />
+        </div>
+        <p class="hint">One candidate or party per line, in ballot order.</p>
+        <div class="field mt-2">
+          <label for="candidates">Candidates</label>
+          <textarea id="candidates" spellcheck="false"></textarea>
+        </div>
+        <div class="field half">
+          <label for="min-selections">Minimum choices</label>
+          <input id="min-selections" type="number" min="0" max="64" />
+        </div>
+        <div class="field half">
+          <label for="max-selections">Maximum choices</label>
+          <input id="max-selections" type="number" min="1" max="64" />
+        </div>
+        <div class="row">
+          <button id="save-draft" class="action secondary">Save the ballot</button>
+        </div>
+        <div id="draft-msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>2. The electoral roll</h2>
+        <p class="hint">
+          Adding voters is the one power no proof can check, so it is committed
+          instead: freezing the roll produces a digest that is sealed onto the
+          chain. Publish the roll and anyone can confirm the two match.
+        </p>
+        <dl class="facts mt-2" id="roll-status"></dl>
+        <div class="row mt-2">
+          <button id="add-voters" class="action secondary">Enrol 20 voters</button>
+          <button id="freeze-roll" class="action secondary">Freeze the roll</button>
+          <button id="export-roll" class="action secondary">Export roll for publication</button>
+        </div>
+        <div id="roll-msg"></div>
+        <div class="field mt-2" id="cards-field" hidden>
+          <label for="cards">Polling cards
+            <span class="hint">shown once - these codes are not stored anywhere</span></label>
+          <textarea id="cards" readonly spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3. Schedule</h2>
+        <p class="hint">
+          Both optional. A closing time is enforced by the clock, not by an
+          operator remembering to act.
+        </p>
+        <div class="field half mt-2">
+          <label for="opens-at">Opens at</label>
+          <input id="opens-at" type="datetime-local" />
+        </div>
+        <div class="field half mt-2">
+          <label for="closes-at">Closes at</label>
+          <input id="closes-at" type="datetime-local" />
+        </div>
+      </div>
+
+      <div class="card raised">
+        <h2>4. Open the poll</h2>
+        <p class="note strong">
+          This seals the candidates, the limits, the schedule, the roll
+          commitment, the trustee roster and the validator set into the chain.
+          <strong>None of them can be changed afterwards.</strong> Type the
+          election id to confirm.
+        </p>
+        <div class="field mt-2">
+          <label for="confirm-open">Election id</label>
+          <input id="confirm-open" type="text" spellcheck="false" autocomplete="off" />
+        </div>
+        <button id="open-poll" class="action">Seal and open the poll</button>
+        <div id="open-msg"></div>
+      </div>
+    </section>
+
+    <!-- ============ VOTING ============ -->
+    <section id="voting" hidden>
+      <div class="card">
+        <h2>Polling is open</h2>
+        <div class="row mt-2">
+          <button id="refresh" class="action secondary">Refresh</button>
+          <button id="seal" class="action secondary">Seal pending block</button>
+          <button id="close" class="action danger">Close the poll</button>
+        </div>
+        <div id="action-msg"></div>
+        <p class="note strong mt-2">
+          Closing is <strong>irreversible</strong> and ends the franchise for
+          anyone who has not yet voted. It is written to the chain, so it stays
+          closed across a restart.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ CEREMONY ============ -->
+    <section id="ceremony" hidden>
+      <div class="card">
+        <h2>Awaiting the trustees</h2>
+        <p class="hint">
+          The count is the one thing this console cannot do. Each trustee holds
+          one share of the election key on their own machine and contributes from
+          their own console. The result appears here when enough have.
+        </p>
+        <div class="pills" id="trustee-pills"></div>
+        <p class="note mt-2" id="ceremony-note"></p>
+        <div class="row mt-2">
+          <button id="refresh-closed" class="action secondary">Refresh</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PUBLISHED ============ -->
+    <section id="published" hidden>
+      <div class="card">
+        <h2>The result is on the chain</h2>
+        <p class="hint">
+          Sealed with every trustee's decryption proof, so anyone can recount it
+          without asking this server to be believed.
+        </p>
+        <div class="row mt-2">
+          <button id="go-results" class="action">Open the results page</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="card">
+      <strong>Operator audit log</strong>
+      <table class="log mt-2"><tbody id="audit-log"></tbody></table>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/admin-page.js"></script>
+</body>
+</html>

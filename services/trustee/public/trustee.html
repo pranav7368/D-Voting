@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>D-Voting - Trustee console</title>
+<link rel="stylesheet" href="/trustee.css" />
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="title">Trustee console</h1>
+    <span class="tag" id="index-tag">-</span>
+  </header>
+
+  <p class="lede">
+    This machine holds one share of the election key. It can contribute to
+    decrypting the <strong>totals</strong>, and it cannot decrypt a ballot.
+  </p>
+
+  <div class="card" id="auth-card">
+    <label for="token">Trustee operator token</label>
+    <input id="token" type="password" autocomplete="off" spellcheck="false"
+           placeholder="this trustee's own token" />
+    <button id="connect" class="action">Connect</button>
+    <p class="msg" id="auth-msg"></p>
+  </div>
+
+  <div id="console" hidden>
+    <div class="card">
+      <div class="row">
+        <strong id="label">-</strong>
+        <span class="phase" id="phase">-</span>
+      </div>
+      <dl class="facts" id="status"></dl>
+      <p class="note" id="message"></p>
+    </div>
+
+    <div class="card">
+      <strong>Your part in the count</strong>
+      <p class="note">
+        Before applying your share, this machine downloads the bulletin board,
+        re-verifies every block against the validator quorum, and recomputes the
+        encrypted totals from the ballots itself. If any of that disagrees with
+        the ballot box, it refuses.
+      </p>
+      <button id="participate" class="action primary">Verify and contribute my share</button>
+      <p class="msg" id="action-msg"></p>
+      <ul class="checks" id="checks"></ul>
+    </div>
+
+    <div class="card subtle">
+      <strong>What this console cannot do</strong>
+      <ul class="plain">
+        <li>It cannot decrypt an individual ballot - only the totals.</li>
+        <li>It cannot export or display your key share.</li>
+        <li>It cannot act on its own, or on the commission's schedule.</li>
+        <li>It cannot produce a result alone: a threshold of trustees is required.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/trustee-page.js"></script>
+</body>
+</html>

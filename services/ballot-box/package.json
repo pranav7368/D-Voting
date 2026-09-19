@@ -1,0 +1,19 @@
+{
+  "name": "@dvoting/ballot-box",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ballot box and public bulletin board: verifies credentials and ballot proofs, records them on the permissioned ledger, and serves inclusion proofs.",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "demo": "node src/scripts/full-election-demo.ts"
+  },
+  "dependencies": {
+    "@dvoting/crypto": "*",
+    "@dvoting/ledger": "*",
+    "@hono/node-server": "^2.1.0",
+    "hono": "^4.13.1",
+    "zod": "^3.24.1"
+  }
+}
