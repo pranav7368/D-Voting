@@ -142,7 +142,7 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 495 tests across six workspaces
+npm test          # 514 tests across six workspaces
 npm run demo      # a complete election, narrated, in ~20s
 npm run dev       # the real system: 11 processes + the web interface
 ```
@@ -316,7 +316,7 @@ Two implementation details carry most of the weight:
 | Secrets never logged | `redactedSummary()`; validated at startup, no defaults |
 | Append-only audit log | separate table; `REVOKE UPDATE, DELETE` in deployment |
 | Rate limiting, strict CORS, security headers, body limits | `src/middleware/` |
-| Dependency scanning | `npm audit` — **0 vulnerabilities**, 27 packages total |
+| Dependency scanning | `npm audit --omit=dev` — **0 known production vulnerabilities** |
 
 **Not yet done, and load-bearing:** TLS 1.3 termination and mTLS between
 internal services; real KYC; KMS/HSM-backed signing. See the Known Limitations
