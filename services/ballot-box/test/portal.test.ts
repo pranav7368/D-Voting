@@ -17,7 +17,8 @@ describe("public verification portal", () => {
       assert.equal(response.status, 200, path);
       assert.match(response.headers.get("Content-Type") ?? "", /text\/html/);
       const body = await response.text();
-      assert.match(body, /Prove you are on the electoral roll/);
+      assert.match(body, /id="identify-heading"/);
+      assert.match(body, /id="rail-identify"/);
       assert.match(body, /vote-page\.js/);
     }
   });
@@ -107,7 +108,7 @@ describe("public verification portal", () => {
     assert.equal(page.status, 200);
     const body = await page.text();
     assert.match(body, /chain-page\.js/);
-    assert.match(body, /re-checked/);
+    assert.match(body, /validator signatures/);
 
     for (const script of ["/chain-page.js", "/chain-lib.js"]) {
       const response = await server.request(script);
@@ -130,6 +131,9 @@ describe("public verification portal", () => {
     const css = await server.request("/app.css");
     assert.equal(css.status, 200);
     assert.match(css.headers.get("Content-Type") ?? "", /text\/css/);
+    const illustration = await server.request("/ballot-hero.png");
+    assert.equal(illustration.status, 200);
+    assert.match(illustration.headers.get("Content-Type") ?? "", /image\/png/);
   });
 
   it("serves the browser crypto bundle, without server-only key material", async () => {

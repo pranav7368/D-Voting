@@ -9,8 +9,8 @@
 
 import {
   loadElection, registerAndGetCredential, prepareSelection, auditPrepared, castPrepared,
-  resetForRevote, session, setStage, show, busy, esc, $,
-} from "/voter.js";
+  resetForRevote, discardPrepared, session, setStage, show, busy, esc, $,
+} from "/voter.js?v=4";
 
 for (const button of document.querySelectorAll("button.action")) {
   button.dataset.label = button.textContent.trim();
@@ -44,7 +44,7 @@ $("register").addEventListener("click", async () => {
     $("rollId").value = "";
     $("code").value = "";
     $("identify-msg").innerHTML = "";
-    setStage("choose");
+    setStage("choose", true);
   } catch (error) {
     show("identify-msg", "bad", esc(error.message));
   } finally {
@@ -53,20 +53,25 @@ $("register").addEventListener("click", async () => {
 });
 
 $("prepare").addEventListener("click", async () => {
-  const selected = document.querySelector('input[name="candidate"]:checked');
-  if (!selected) {
-    show("choose-msg", "bad", "Select a candidate first.");
+  const selected = [...document.querySelectorAll('input[name="candidate"]:checked')]
+    .map((input) => Number(input.value));
+  if (selected.length < session.election.minSelections || selected.length > session.election.maxSelections) {
+    const rule = session.election.minSelections === session.election.maxSelections
+      ? `Select exactly ${session.election.maxSelections} candidate${session.election.maxSelections === 1 ? "" : "s"}.`
+      : `Select ${session.election.minSelections} to ${session.election.maxSelections} candidates.`;
+    show("choose-msg", "bad", rule);
     return;
   }
 
   busy($("prepare"), true, "Encrypting on this device…");
   try {
-    const commitment = await prepareSelection(Number(selected.value));
+    const commitment = await prepareSelection(selected);
     $("commitment").textContent = commitment;
-    $("chosen-summary").textContent =
-      `You chose: ${session.election.candidates[session.prepared.selectedIndex]}`;
+    $("chosen-summary").textContent = selected.length
+      ? selected.map((index) => session.election.candidates[index]).join(", ")
+      : "No candidate selected";
     $("choose-msg").innerHTML = "";
-    setStage("confirm");
+    setStage("confirm", true);
   } catch (error) {
     show("choose-msg", "bad", esc(error.message));
   } finally {
@@ -80,7 +85,7 @@ $("cast").addEventListener("click", async () => {
   try {
     const result = await castPrepared();
     $("tracking").textContent = result.trackingCode;
-    setStage("done");
+    setStage("done", true);
   } catch (error) {
     show("confirm-msg", "bad", esc(error.message));
   } finally {
@@ -100,7 +105,7 @@ $("audit").addEventListener("click", async () => {
         "<strong>Verified.</strong> This ballot really did encrypt your choice. " +
           "It is now spoiled and cannot be counted — choose again to cast a fresh one.",
       );
-      setTimeout(() => setStage("choose"), 2500);
+      setTimeout(() => setStage("choose", true), 2500);
     } else {
       show(
         "confirm-msg", "bad",
@@ -131,5 +136,11 @@ $("goverify").addEventListener("click", () => {
 $("revote").addEventListener("click", () => {
   resetForRevote();
   $("choose-msg").innerHTML = "";
-  setStage("choose");
+  setStage("choose", true);
+});
+
+$("change-choice").addEventListener("click", () => {
+  discardPrepared();
+  $("confirm-msg").innerHTML = "";
+  setStage("choose", true);
 });

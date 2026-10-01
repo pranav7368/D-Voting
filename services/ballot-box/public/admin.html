@@ -3,26 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D-Voting - Election administration</title>
-<link rel="stylesheet" href="/app.css" />
+<title>Election administration · D-Voting</title>
+<link rel="stylesheet" href="/app.css?v=3" />
 </head>
-<body>
-<main>
-  <header>
-    <h1>Election administration</h1>
-    <span class="tag">D-Voting</span>
-    <nav>
-      <button data-href="/vote">Vote</button>
-      <button data-href="/verify">Verify</button>
-      <button data-href="/results">Results</button>
-      <button data-href="/chain">Chain</button>
-    </nav>
-  </header>
-
-  <p class="lede">
-    Compose the election, manage the roll, open and close the poll. This console
-    cannot decrypt, count, or alter a single ballot.
-  </p>
+<body class="page-admin">
+<a class="skip-link" href="#main-content">Skip to administration</a>
+<header class="site-header"><a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a><nav aria-label="Main navigation"><a href="/vote">Cast vote</a><a href="/verify">Verify ballot</a><a href="/results">Results</a><a href="/chain">Public record</a></nav><span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Commission console</span></header>
+<main id="main-content">
+  <div class="page-intro"><div><span class="eyebrow">ELECTION COMMISSION</span><h1>Election administration</h1><p>Compose the ballot, manage the roll, and open or close the poll. This console has no access to individual votes or the tally.</p></div></div>
 
   <div class="card" id="auth-card">
     <div class="field">
@@ -196,7 +184,7 @@
     </div>
   </div>
 </main>
-
+<footer class="site-footer"><span>D-Voting · Election administration</span><span>Private choice. Public proof.</span></footer>
 <script type="module" src="/admin-page.js"></script>
 </body>
 </html>

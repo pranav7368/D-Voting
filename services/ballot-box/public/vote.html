@@ -3,152 +3,46 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D-Voting - Cast your vote</title>
-<link rel="stylesheet" href="/app.css" />
+<meta name="theme-color" content="#0b1736" />
+<title>Cast your vote · D-Voting</title>
+<link rel="stylesheet" href="/app.css?v=3" />
 </head>
-<body>
-<main>
-  <header>
-    <h1 id="election-name">Loading...</h1>
-    <span class="tag">D-Voting</span>
-    <nav>
-      <button aria-current="true">Vote</button>
-      <button data-href="/verify">Verify</button>
-      <button data-href="/results">Results</button>
-      <button data-href="/chain">Chain</button>
-    </nav>
-  </header>
-
-  <div class="rail">
-    <span id="rail-identify">1 &middot; Identify</span>
-    <span id="rail-choose">2 &middot; Choose</span>
-    <span id="rail-confirm">3 &middot; Confirm</span>
-    <span id="rail-done">4 &middot; Receipt</span>
-  </div>
-
-  <!-- STEP 1 ------------------------------------------------------------- -->
-  <section id="stage-identify">
-    <h2>Prove you are on the electoral roll</h2>
-    <p class="lede">Enter the details from your polling card.</p>
-
-    <div class="card">
-      <div class="field">
-        <label for="rollId">Roll number</label>
-        <input id="rollId" type="text" autocomplete="off" spellcheck="false" placeholder="R-100001" />
-      </div>
-      <div class="field">
-        <label for="code">Enrolment code
-          <span class="hint">&mdash; dashes, spaces and case do not matter</span></label>
-        <input id="code" type="text" autocomplete="off" spellcheck="false"
-               placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XX" />
-      </div>
-      <button id="register" class="action" data-label="Continue">Continue</button>
-      <div id="identify-msg"></div>
-    </div>
-
-    <div class="card raised">
-      <h3 class="mt-0">This election</h3>
-      <dl class="facts" id="election-facts"></dl>
-    </div>
-
-    <p class="note">
-      Your polling card proves eligibility. The registration service then signs a
-      credential <em>without being able to see it</em>, so it cannot connect you
-      to the ballot you cast. That is a mathematical property, not a promise.
-    </p>
-
-    <p class="note strong">
-      <strong>Stay on this tab until you have cast a ballot.</strong> Your
-      credential lives only in this tab's memory, never on disk — closing or
-      reloading loses it, and a polling card can only ever be used to obtain
-      <strong>one</strong> credential. If that happens, you will need a fresh
-      polling card to try again.
-    </p>
+<body class="page-vote">
+<a class="skip-link" href="#main-content">Skip to voting</a>
+<header class="site-header">
+  <a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a>
+  <nav aria-label="Main navigation"><a href="/vote" aria-current="page">Cast vote</a><a href="/verify">Verify ballot</a><a href="/results">Results</a><a href="/chain">Public record</a></nav>
+  <span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Independently verifiable</span>
+</header>
+<main id="main-content">
+  <section class="vote-hero" aria-labelledby="hero-heading">
+    <div class="hero-copy"><span class="eyebrow light">A MORE TRANSPARENT WAY TO VOTE</span><h1 id="hero-heading">Your vote.<br /><em>Your voice.</em><br />Verified by you.</h1><p>Make your choice privately, cast your encrypted ballot, and check that it was recorded. Every step is designed to earn your confidence.</p><div class="hero-meta"><span id="election-status" class="hero-status">Checking election status…</span><span class="hero-divider" aria-hidden="true"></span><span id="election-name">Loading election…</span></div></div>
+    <img class="hero-art" src="/ballot-hero.png" alt="" width="640" height="640" /><span class="hero-glow" aria-hidden="true"></span>
   </section>
-
-  <!-- STEP 2 ------------------------------------------------------------- -->
-  <section id="stage-choose" hidden>
-    <h2>Choose your candidate</h2>
-    <p class="lede">Your choice is encrypted on this device before anything is sent.</p>
-
-    <div class="card">
-      <div class="choices" id="choices"></div>
-      <div class="row end">
-        <button id="prepare" class="action" data-label="Prepare my ballot">Prepare my ballot</button>
-      </div>
-      <div id="choose-msg"></div>
-    </div>
-
-    <p class="note">
-      Nothing has been sent yet. The next step encrypts your ballot here in the
-      browser and shows you a fingerprint of it, <em>before</em> you decide
-      whether to cast it or check it.
-    </p>
-  </section>
-
-  <!-- STEP 3 ------------------------------------------------------------- -->
-  <section id="stage-confirm" hidden>
-    <h2>Cast it, or check it first</h2>
-    <p class="lede">
-      Your ballot is encrypted and locked to the fingerprint below. Because this
-      app committed to it <em>before</em> you chose, it cannot cheat and get away
-      with it.
-    </p>
-
-    <div class="card">
-      <label>Ballot fingerprint</label>
-      <div class="tracking mono" id="commitment"></div>
-      <p class="hint" id="chosen-summary"></p>
-
-      <div class="row mt-2">
-        <button id="cast" class="action" data-label="Cast this ballot">Cast this ballot</button>
-        <button id="audit" class="action secondary" data-label="Check it instead">Check it instead</button>
-      </div>
-      <div id="confirm-msg"></div>
-    </div>
-
-    <p class="note strong">
-      <strong>Checking spoils this ballot.</strong> To prove it encrypted your real
-      choice, the app must reveal the secret that unlocks it, so it can never be
-      counted. You will then start again with a fresh one. Check as many times as
-      you like; a dishonest app cannot know which attempt you will check.
-    </p>
-  </section>
-
-  <!-- STEP 4 ------------------------------------------------------------- -->
-  <section id="stage-done" hidden>
-    <h2>Your ballot is cast</h2>
-    <p class="lede">Keep this tracking code. It proves your ballot is in the record.</p>
-
-    <div class="card">
-      <label>Tracking code</label>
-      <div class="tracking" id="tracking"></div>
-      <div class="row">
-        <button id="copy" class="action secondary" data-label="Copy">Copy</button>
-        <button id="goverify" class="action" data-label="Verify it now">Verify it now</button>
-      </div>
-      <div id="done-msg"></div>
-    </div>
-
-    <p class="note">
-      The code reveals <em>that</em> you voted, never <em>how</em>. Anyone can
-      look it up; nobody can read it. Your vote can only be decrypted as part of
-      the final total, and only when a quorum of trustees cooperate.
-    </p>
-
-    <div class="card raised mt-2">
-      <h3 class="mt-0">Voted under pressure?</h3>
-      <p class="hint">
-        If someone made you cast that vote, you can cast another one right now,
-        while your credential is still in this tab. Only your <strong>last</strong>
-        ballot is counted — this one silently replaces it. Leave this page and the
-        credential is gone; only you decide whether to use it again.
-      </p>
-      <button id="revote" class="action secondary" data-label="Vote again with this credential">Vote again with this credential</button>
-    </div>
-  </section>
-</main>
-
-<script type="module" src="/vote-page.js"></script>
+  <div class="journey-intro"><div><span class="eyebrow">THE VOTING JOURNEY</span><h2>Cast with confidence</h2><p>Four short steps from your polling card to a receipt you can verify.</p></div><span class="journey-time">Private by design</span></div>
+  <ol class="rail" aria-label="Voting progress"><li id="rail-identify"><span class="rail-number">01</span><span>Identify</span></li><li id="rail-choose"><span class="rail-number">02</span><span>Choose</span></li><li id="rail-confirm"><span class="rail-number">03</span><span>Review</span></li><li id="rail-done"><span class="rail-number">04</span><span>Receipt</span></li></ol>
+  <div class="stage-layout"><div class="stage-main">
+    <section id="stage-identify" class="stage-panel" aria-labelledby="identify-heading">
+      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">01</span><div><span class="eyebrow">STEP ONE</span><h2 id="identify-heading">Let’s confirm your eligibility</h2><p>Use the details on your polling card. Your identity is checked separately from your ballot.</p></div></div>
+      <div class="card form-card"><div class="field"><label for="rollId">Roll number</label><p class="field-help">The number printed on your polling card</p><input id="rollId" type="text" autocomplete="off" spellcheck="false" placeholder="For example, R-100001" /></div><div class="field"><label for="code">Enrolment code</label><p class="field-help">Dashes, spaces, and capital letters are optional</p><input id="code" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your code" /></div><button id="register" class="action" data-label="Continue to ballot">Continue to ballot <span aria-hidden="true">→</span></button><div id="identify-msg" role="status" aria-live="polite"></div></div>
+      <div class="privacy-callout"><span class="callout-symbol" aria-hidden="true">✦</span><div><strong>Your identity stays separate from your vote</strong><p>The registration service signs a hidden credential. It can confirm you may vote without seeing the ballot you cast.</p></div></div>
+      <p class="critical-note"><strong>Keep this tab open until you cast.</strong> Your voting credential exists only in this tab’s memory. Reloading or closing it will lose your in-progress session, and the same polling card cannot issue another credential.</p>
+    </section>
+    <section id="stage-choose" class="stage-panel" aria-labelledby="choose-heading" hidden>
+      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">02</span><div><span class="eyebrow">STEP TWO</span><h2 id="choose-heading">Make your selection</h2><p>Choose from the options on your ballot. Your selection is encrypted on this device.</p></div></div>
+      <div class="card form-card"><div class="ballot-title"><span class="ballot-title-icon" aria-hidden="true">✓</span><div><strong>Official ballot</strong><small id="ballot-rule">Select your choice</small></div></div><div class="choices" id="choices"></div><div class="form-actions"><button id="prepare" class="action" data-label="Review encrypted ballot">Review encrypted ballot <span aria-hidden="true">→</span></button></div><div id="choose-msg" role="status" aria-live="polite"></div></div><p class="note">Nothing is submitted yet. You will review a fingerprint of your encrypted ballot before deciding to cast or audit it.</p>
+    </section>
+    <section id="stage-confirm" class="stage-panel" aria-labelledby="confirm-heading" hidden>
+      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">03</span><div><span class="eyebrow">STEP THREE</span><h2 id="confirm-heading">Review before you cast</h2><p>Your ballot is encrypted and locked to the fingerprint below.</p></div></div>
+      <div class="card form-card"><div class="review-summary"><span class="review-label">Your selection</span><strong id="chosen-summary"></strong></div><div class="field"><label for="commitment">Ballot fingerprint</label><p class="field-help">A unique reference to the encrypted ballot prepared on this device</p><div class="tracking mono" id="commitment" tabindex="0"></div></div><div class="row mt-2"><button id="cast" class="action" data-label="Cast this ballot">Cast this ballot <span aria-hidden="true">→</span></button><button id="audit" class="action secondary" data-label="Audit it instead">Audit it instead</button><button id="change-choice" class="action secondary" data-label="Change selection">Change selection</button></div><div id="confirm-msg" role="status" aria-live="polite"></div></div><p class="critical-note"><strong>Auditing uses up this ballot.</strong> The app reveals how it encrypted your choice so you can check it. That ballot cannot then be counted; you can prepare another one with the same credential.</p>
+    </section>
+    <section id="stage-done" class="stage-panel" aria-labelledby="done-heading" hidden>
+      <div class="stage-heading"><span class="stage-icon done-icon" aria-hidden="true">✓</span><div><span class="eyebrow">BALLOT SUBMITTED</span><h2 id="done-heading">Your ballot is cast</h2><p>Keep your tracking code and use it to check that your ballot is in the public record.</p></div></div>
+      <div class="card form-card receipt-card"><span class="receipt-kicker">YOUR TRACKING RECEIPT</span><label for="tracking">Tracking code</label><div class="tracking" id="tracking" tabindex="0"></div><div class="row"><button id="copy" class="action secondary" data-label="Copy code">Copy code</button><button id="goverify" class="action" data-label="Verify my ballot">Verify my ballot <span aria-hidden="true">→</span></button></div><div id="done-msg" role="status" aria-live="polite"></div></div><p class="note">Use this code to check that your encrypted ballot was recorded once it is sealed. The code does not reveal how you voted.</p><details class="revote-details"><summary>Need to replace this vote?</summary><p>If you voted under pressure, you can cast another ballot while your credential is still in this tab. Only your latest ballot is counted.</p><button id="revote" class="action secondary" data-label="Vote again with this credential">Vote again with this credential</button></details>
+    </section>
+  </div><aside class="stage-aside" aria-label="Election information"><div class="aside-card"><span class="eyebrow">ELECTION AT A GLANCE</span><h3>The election</h3><dl class="facts" id="election-facts"><dt>Status</dt><dd>Loading…</dd></dl></div><div class="aside-card trust-aside"><div class="trust-icon" aria-hidden="true">✧</div><h3>Built for trust, from start to finish</h3><ul><li><span aria-hidden="true">✓</span> Your choice is encrypted before it leaves this device</li><li><span aria-hidden="true">✓</span> A receipt lets you verify it was recorded</li><li><span aria-hidden="true">✓</span> Independent authorities validate the public record</li></ul><a href="/chain">Explore the public record <span aria-hidden="true">↗</span></a></div></aside></div>
+  <section class="explain-band" aria-labelledby="explain-heading"><div><span class="eyebrow light">TRANSPARENCY YOU CAN SEE</span><h2 id="explain-heading">Trust is something you can check.</h2><p>After voting, use your receipt to verify that your encrypted ballot appears in the public record. The count is unlocked only when enough independent trustees participate.</p></div><a class="light-link" href="/verify">How verification works <span aria-hidden="true">→</span></a></section>
+</main><footer class="site-footer"><span>D-Voting · Verifiable elections</span><span>Private choice. Public proof.</span></footer>
+<script type="module" src="/vote-page.js?v=4"></script>
 </body>
 </html>
