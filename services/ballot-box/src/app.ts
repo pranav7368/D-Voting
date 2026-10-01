@@ -108,6 +108,7 @@ export function createApp(options: AppOptions): Hono {
     "/results": { file: "results.html", type: HTML },
     "/chain": { file: "chain.html", type: HTML },
     "/app.css": { file: "app.css", type: "text/css; charset=utf-8" },
+    "/ballot-hero.png": { file: "ballot-hero.png", type: "image/png" },
     "/verify-lib.js": { file: "verify-lib.js", type: JS },
     "/verify-page.js": { file: "verify-page.js", type: JS },
     "/voter.js": { file: "voter.js", type: JS },
@@ -131,11 +132,11 @@ export function createApp(options: AppOptions): Hono {
         const { dirname, join } = await import("node:path");
         const { fileURLToPath } = await import("node:url");
         const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-        const body = await readFile(join(publicDir, asset.file), "utf8");
+        const body = await readFile(join(publicDir, asset.file));
         // The portal is static and identical for everyone; the CSP is tight
         // because the page's whole job is to be trustworthy.
         c.header("Content-Type", asset.type);
-        c.header("Cache-Control", "public, max-age=300");
+        c.header("Cache-Control", asset.type === HTML ? "no-cache" : "public, max-age=300");
         // connect-src must allow the Registration Authority's origin: the
         // voter's browser talks to it DIRECTLY, so that neither service sees
         // both the voter's identity and their ballot.
@@ -146,6 +147,7 @@ export function createApp(options: AppOptions): Hono {
             "default-src 'none'",
             "script-src 'self'",
             "style-src 'self'",
+            "img-src 'self'",
             `connect-src 'self'${raOrigin ? ` ${raOrigin}` : ""}`,
             "base-uri 'none'",
             "form-action 'none'",

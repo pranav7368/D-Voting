@@ -3,33 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D-Voting - Result</title>
-<link rel="stylesheet" href="/app.css" />
+<title>Election results · D-Voting</title>
+<link rel="stylesheet" href="/app.css?v=3" />
 </head>
-<body>
-<main>
-  <header>
-    <h1 id="election-name">Result</h1>
-    <span class="tag">D-Voting</span>
-    <nav>
-      <button data-href="/vote">Vote</button>
-      <button data-href="/verify">Verify</button>
-      <button aria-current="true">Results</button>
-      <button data-href="/chain">Chain</button>
-    </nav>
-  </header>
-
+<body class="page-public">
+<a class="skip-link" href="#main-content">Skip to results</a>
+<header class="site-header"><a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a><nav aria-label="Main navigation"><a href="/vote">Cast vote</a><a href="/verify">Verify ballot</a><a href="/results" aria-current="page">Results</a><a href="/chain">Public record</a></nav><span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Independently verifiable</span></header>
+<main id="main-content">
+  <div class="page-intro"><div><span class="eyebrow">PUBLIC TALLY</span><h1>Election results</h1><p id="election-name">Loading election…</p></div><img class="page-intro-art" src="/ballot-hero.png" alt="" width="160" height="125" /></div>
   <section id="content">
     <div class="card"><span class="spinner"></span>Loading...</div>
   </section>
-
-  <p class="note">
-    The result is not an announcement. It is sealed on the chain together with
-    every trustee's decryption proof, so anyone can redo the count from that
-    record. The checks below are exactly that recount, not a claim by this server.
-  </p>
+  <p class="note">When published, the result and trustee proofs are sealed in the public record. Anyone can independently redo the count from that record.</p>
 </main>
-
-<script type="module" src="/results-page.js"></script>
+<footer class="site-footer"><span>D-Voting · Verifiable elections</span><span>Private choice. Public proof.</span></footer>
+<script type="module" src="/results-page.js?v=2"></script>
 </body>
 </html>

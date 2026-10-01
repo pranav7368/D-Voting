@@ -65,14 +65,21 @@ function busy(button, on, label) {
   button.innerHTML = on ? `<span class="spinner"></span>${esc(label)}` : button.dataset.label;
 }
 
-function setStage(stage) {
+function setStage(stage, focus = false) {
   const order = ["identify", "choose", "confirm", "done"];
   for (const [index, name] of order.entries()) {
     const element = $(`rail-${name}`);
     const current = order.indexOf(stage);
     element.dataset.state = index < current ? "done" : index === current ? "active" : "";
+    if (index === current) element.setAttribute("aria-current", "step");
+    else element.removeAttribute("aria-current");
   }
   for (const name of order) $(`stage-${name}`).hidden = name !== stage;
+  if (focus) {
+    const heading = $(`stage-${stage}`).querySelector("h2");
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+  }
 }
 
 async function api(path, options) {
@@ -101,24 +108,37 @@ export async function loadElection() {
   session.electionKey = { group, y: os2ip(fromBase64Url(election.electionPublicKey)) };
 
   $("election-name").textContent = election.name || election.electionId;
+  const status = $("election-status");
+  if (status) {
+    status.textContent = election.open ? "Voting is open" : phaseLabel(election);
+    status.dataset.open = String(election.open);
+  }
+  const ballotRule = $("ballot-rule");
+  if (ballotRule) {
+    ballotRule.textContent = election.minSelections === election.maxSelections
+      ? `Choose exactly ${election.maxSelections}`
+      : `Choose ${election.minSelections} to ${election.maxSelections}`;
+  }
   $("election-facts").innerHTML = `
     ${election.name ? `<dt>Election id</dt><dd>${esc(election.electionId)}</dd>` : ""}
     <dt>Candidates</dt><dd>${election.candidates.map(esc).join(", ")}</dd>
     <dt>Choose</dt><dd>${election.minSelections === election.maxSelections
       ? `exactly ${election.maxSelections}`
       : `${election.minSelections} to ${election.maxSelections}`}</dd>
-    <dt>Authorities</dt><dd>${election.validators.map((v) => esc(v.id)).join(", ")} (quorum ${election.quorum})</dd>
+    <dt>Authorities</dt><dd>${election.quorum} of ${election.validators.length} signatures required for each block</dd>
     <dt>Trustees</dt><dd>${election.trustees.threshold} of ${election.trustees.total} required to decrypt the result</dd>
     ${election.rollCommitment
       ? `<dt>Roll commitment</dt><dd>${esc(election.rollCommitment)}</dd>`
       : ""}
     <dt>Status</dt><dd>${esc(phaseLabel(election))}</dd>`;
 
+  const selectionType = election.minSelections === 1 && election.maxSelections === 1
+    ? "radio" : "checkbox";
   $("choices").innerHTML = election.candidates
     .map(
       (candidate, index) => `
       <label class="choice" data-index="${index}">
-        <input type="radio" name="candidate" value="${index}" />
+        <input type="${selectionType}" name="candidate" value="${index}" />
         <span>${esc(candidate)}</span>
       </label>`,
     )
@@ -126,8 +146,9 @@ export async function loadElection() {
 
   for (const label of document.querySelectorAll(".choice")) {
     label.addEventListener("change", () => {
-      for (const other of document.querySelectorAll(".choice")) other.dataset.selected = "false";
-      label.dataset.selected = "true";
+      for (const other of document.querySelectorAll(".choice")) {
+        other.dataset.selected = String(other.querySelector("input").checked);
+      }
     });
   }
 
@@ -236,8 +257,9 @@ export async function registerAndGetCredential(rollId, enrolmentCode) {
 
 // --- 3. Encrypt the ballot on this device ----------------------------------
 
-export async function prepareSelection(selectedIndex) {
-  const selections = session.election.candidates.map((_, i) => (i === selectedIndex ? 1 : 0));
+export async function prepareSelection(selectedIndices) {
+  const chosen = new Set(selectedIndices);
+  const selections = session.election.candidates.map((_, i) => (chosen.has(i) ? 1 : 0));
 
   const prepared = await prepareBallot(
     {
@@ -251,7 +273,7 @@ export async function prepareSelection(selectedIndex) {
     { credentialFingerprint: session.fingerprint },
   );
 
-  session.prepared = { ...prepared, selections, selectedIndex };
+  session.prepared = { ...prepared, selections, selectedIndices: [...selectedIndices] };
   return prepared.commitment;
 }
 
@@ -315,6 +337,11 @@ export function resetForRevote() {
   session.trackingCode = null;
   for (const label of document.querySelectorAll(".choice")) label.dataset.selected = "false";
   for (const input of document.querySelectorAll('input[name="candidate"]')) input.checked = false;
+}
+
+/** Leave the review step without submitting or disclosing a prepared ballot. */
+export function discardPrepared() {
+  session.prepared = null;
 }
 
 export async function castPrepared() {

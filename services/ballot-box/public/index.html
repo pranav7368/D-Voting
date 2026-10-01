@@ -3,47 +3,29 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D-Voting - Verify your ballot</title>
-<link rel="stylesheet" href="/app.css" />
+<title>Verify your ballot · D-Voting</title>
+<link rel="stylesheet" href="/app.css?v=3" />
 </head>
-<body>
-<main>
-  <header>
-    <h1>Verify your ballot</h1>
-    <span class="tag">D-Voting</span>
-    <nav>
-      <button data-href="/vote">Vote</button>
-      <button aria-current="true">Verify</button>
-      <button data-href="/results">Results</button>
-      <button data-href="/chain">Chain</button>
-    </nav>
-  </header>
-
-  <p class="lede">
-    Checks run entirely in your browser. Nothing this server says is taken on trust.
-  </p>
-
-  <div class="card" id="election-card"><span class="spinner"></span>Loading election...</div>
-
+<body class="page-public">
+<a class="skip-link" href="#main-content">Skip to verification</a>
+<header class="site-header"><a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a><nav aria-label="Main navigation"><a href="/vote">Cast vote</a><a href="/verify" aria-current="page">Verify ballot</a><a href="/results">Results</a><a href="/chain">Public record</a></nav><span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Independently verifiable</span></header>
+<main id="main-content">
+  <div class="page-intro"><div><span class="eyebrow">YOUR PROOF, IN YOUR HANDS</span><h1>Verify your ballot</h1><p>Enter your tracking code to check that your encrypted ballot is in the public record. The checks run in your browser.</p></div><img class="page-intro-art" src="/ballot-hero.png" alt="" width="160" height="125" /></div>
+  <div class="public-layout"><div>
   <div class="card">
+    <span class="section-kicker">BALLOT LOOKUP</span>
     <div class="field">
       <label for="tracking">Your tracking code</label>
       <input id="tracking" type="text" autocomplete="off" spellcheck="false"
-             placeholder="e.g. fF7F7L5rwmeCLue8cA44aw" />
+             placeholder="Paste the code from your receipt" />
     </div>
-    <button id="check" class="action" data-label="Verify">Verify</button>
+    <button id="check" class="action" data-label="Verify my ballot">Verify my ballot</button>
   </div>
-
-  <div id="result"></div>
-
-  <p class="note">
-    Your vote stays secret. This confirms that <em>your ballot is in the record</em>
-    and that the record was signed by a quorum of named authorities. It never
-    decrypts anything. Your browser re-derives the block hash, re-checks each
-    <code>Ed25519</code> signature, and re-walks the Merkle path itself.
-  </p>
+  <div id="result" role="status" aria-live="polite"></div>
+  </div><aside class="public-help"><span class="section-kicker">HOW IT WORKS</span><h2>What this check proves</h2><ol><li>Find your ballot in the public record.</li><li>Recheck the record’s hash and authority signatures.</li><li>Confirm its inclusion path.</li></ol><p>Your choice remains encrypted. A successful check confirms the ballot was recorded, not which candidate you chose.</p></aside></div>
+  <div class="card raised mt-3" id="election-card"><span class="spinner"></span>Loading election...</div>
 </main>
-
+<footer class="site-footer"><span>D-Voting · Verifiable elections</span><span>Private choice. Public proof.</span></footer>
 <script type="module" src="/verify-page.js"></script>
 </body>
 </html>

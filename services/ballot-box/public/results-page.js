@@ -50,7 +50,11 @@ try {
           ${
             election.open
               ? "Voting is still open. The result is published after the poll closes and the trustees decrypt the totals together."
-              : "Voting has closed. The result appears once a quorum of trustees has completed the decryption ceremony."
+              : election.phase === "setup"
+                ? "This election has not opened yet. Results appear after voting ends and the trustees complete the count."
+                : election.phase === "scheduled"
+                  ? "Voting has not started yet. Results appear after voting ends and the trustees complete the count."
+                  : "Voting has closed. The result appears once a quorum of trustees has completed the decryption ceremony."
           }
         </p>
         ${progress}

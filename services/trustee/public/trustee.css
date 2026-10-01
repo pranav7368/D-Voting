@@ -127,3 +127,34 @@ button.action.primary { background: #1d3a6b; border-color: #2f5ca8; }
 .checks, .plain { margin: 0.8rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; }
 .checks li { color: var(--ok); margin-bottom: 0.25rem; }
 .plain li { color: var(--muted); margin-bottom: 0.25rem; }
+
+/* Match the public portal while giving this independent console its own space. */
+:root { --bg: #f5f7fb; --card: #fff; --line: #e1e8f2; --ink: #14213d; --muted: #6b7c95; --accent: #3d6ce6; --ok: #118b70; --warn: #a47119; --bad: #c3463e; }
+body { padding: 0 18px 55px; background: radial-gradient(circle at 80% 0, #e7efff, transparent 420px), var(--bg); font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 840px; }
+header { display: flex; gap: 10px; min-height: 90px; margin: 0 0 24px; border-bottom: 1px solid var(--line); }
+.brand-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: white; background: #0a1733; font-size: 13px; font-weight: 850; letter-spacing: -.09em; }
+.brand-name { display: flex; flex-direction: column; color: #0a1733; font-size: 18px; font-weight: 850; line-height: 1.1; letter-spacing: -.05em; }
+.brand-name small { margin-top: 4px; color: #8896a8; font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.tag { margin-left: auto; padding: 5px 12px; color: #3458ab; background: #eaf0ff; border-color: #d5e1fb; font-size: 11px; font-weight: 750; }
+.intro { margin-bottom: 28px; padding: 31px 34px; border-radius: 19px; color: white; background: radial-gradient(circle at 90% 30%, #244681, #0a1733 80%); box-shadow: 0 22px 45px rgba(10, 23, 51, .13); }
+.eyebrow { color: #8ee8d3; font-size: 10px; font-weight: 850; letter-spacing: .16em; }
+.intro h1 { margin: 7px 0 10px; color: white; font-size: clamp(27px, 4vw, 37px); letter-spacing: -.05em; }
+.intro .lede { max-width: 630px; margin: 0; color: #c3d0e7; font-size: 13px; }
+.card { padding: 24px 27px; border-radius: 15px; box-shadow: 0 14px 40px rgba(20,36,70,.055); }
+.card.subtle { background: #fafdff; }
+.card strong { color: #182b4d; }
+label { color: #344b6b; font-weight: 750; }
+input { min-height: 46px; padding: 11px 13px; color: var(--ink); background: #fafcff; border-color: #d5dfed; border-radius: 9px; }
+input:focus { outline: 3px solid #a7c3ff; outline-offset: 2px; }
+button.action { min-height: 43px; padding: 9px 18px; border: 1px solid #315ecf; border-radius: 9px; color: white; background: #3d6ce6; font-size: 12px; font-weight: 750; box-shadow: 0 8px 17px rgba(53,101,216,.18); }
+button.action.primary { background: #3d6ce6; border-color: #315ecf; }
+button.action:hover:not(:disabled) { background: #2c57c5; border-color: #234ab0; }
+button.action:focus-visible { outline: 3px solid #9dbaff; outline-offset: 3px; }
+.phase { padding: 3px 10px; background: #f3f6fc; font-weight: 750; }
+.facts { gap: 7px 15px; }
+.facts dd { overflow-wrap: anywhere; }
+.note { padding-left: 12px; border-left: 3px solid #a8bee4; }
+.msg.ok { color: var(--ok); }
+.msg.bad { color: var(--bad); }
+@media (max-width: 560px) { body { padding: 0 14px 35px; } header { min-height: 76px; } .brand-name { font-size: 16px; } .intro { padding: 25px; } .card { padding: 20px; } .facts { display: block; } .facts dt { margin-top: 10px; font-size: 11px; } .facts dd { margin: 2px 0; font-size: 12px; } }

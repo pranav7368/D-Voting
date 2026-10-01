@@ -3,29 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D-Voting - Chain Explorer</title>
-<link rel="stylesheet" href="/app.css" />
+<title>Public record · D-Voting</title>
+<link rel="stylesheet" href="/app.css?v=3" />
 </head>
-<body>
-<main>
-  <header>
-    <h1 id="election-name">Chain Explorer</h1>
-    <span class="tag">D-Voting</span>
-    <nav>
-      <button data-href="/vote">Vote</button>
-      <button data-href="/verify">Verify</button>
-      <button data-href="/results">Results</button>
-      <button aria-current="true">Chain</button>
-    </nav>
-  </header>
-
-  <p class="lede">
-    Every block below was downloaded from this server and then re-checked
-    <strong>in your browser</strong> — its hash recomputed from scratch, its
-    link to the block before it recomputed from scratch, and every validator
-    signature re-verified against the published validator set. Nothing here is
-    the server's word for it.
-  </p>
+<body class="page-public">
+<a class="skip-link" href="#main-content">Skip to public record</a>
+<header class="site-header"><a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a><nav aria-label="Main navigation"><a href="/vote">Cast vote</a><a href="/verify">Verify ballot</a><a href="/results">Results</a><a href="/chain" aria-current="page">Public record</a></nav><span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Independently verifiable</span></header>
+<main id="main-content">
+  <div class="page-intro"><div><span class="eyebrow">OPEN TO EVERYONE</span><h1>Public record</h1><p>Explore every sealed block. Your browser checks its hash, its link to the previous block, and the validator signatures.</p><span class="hint" id="election-name">Loading election…</span></div><img class="page-intro-art" src="/ballot-hero.png" alt="" width="160" height="125" /></div>
 
   <div id="loading" class="card">Loading the chain…</div>
   <div id="error" class="card" hidden></div>
@@ -56,7 +41,7 @@
     <div id="chain-track"></div>
   </div>
 </main>
-
+<footer class="site-footer"><span>D-Voting · Verifiable elections</span><span>Private choice. Public proof.</span></footer>
 <script type="module" src="/chain-page.js"></script>
 </body>
 </html>
