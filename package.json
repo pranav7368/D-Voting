@@ -21,7 +21,8 @@
     "dev": "node scripts/dev-up.ts",
     "build:web": "node scripts/build-web.ts",
     "demo": "node services/ballot-box/src/scripts/full-election-demo.ts",
-    "bench": "node packages/crypto/bench/election-bench.ts"
+    "bench": "node packages/crypto/bench/election-bench.ts",
+    "verify": "node packages/verifier/src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

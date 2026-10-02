@@ -22,7 +22,7 @@ up in it.
 ## 1. Run the test suite
 
 ```bash
-npm test              # 495 tests across six workspaces
+npm test              # 526 tests across seven workspaces
 ```
 
 Per package, if you want to narrow it down:
@@ -30,17 +30,18 @@ Per package, if you want to narrow it down:
 ```bash
 npm test --workspace @dvoting/crypto                  # 174 — the cryptography
 npm test --workspace @dvoting/ledger                  #  90 — chain & consensus
-npm test --workspace @dvoting/ballot-box              # 132 — lifecycle, voting, ceremony, portal, admin
+npm test --workspace @dvoting/ballot-box              # 151 — lifecycle, voting, ceremony, portal, admin
 npm test --workspace @dvoting/registration-authority  #  73 — roll, credentials, roll administration
 npm test --workspace @dvoting/validator-node          #  16 — HTTP consensus
 npm test --workspace @dvoting/trustee                 #  10 — what a trustee refuses to decrypt
+npm test --workspace @dvoting/verifier                #  12 — the standalone recount, and forgeries it catches
 ```
 
 Types and dependency audit:
 
 ```bash
 npm run typecheck --workspaces
-npm audit                                             # expect: 0 vulnerabilities
+npm audit                                             # expect: found 0 vulnerabilities
 ```
 
 A single test file, when you are working on one thing:
@@ -178,6 +179,24 @@ Watch it from a voter's side too: while the ceremony is under way, `/results`
 shows the public progress — which trustees have contributed and how many are
 still needed.
 
+### Step 6 — recount it on your own machine
+
+```bash
+npm run verify -- --url http://localhost:8082   --validators .local/validators.json --save .local/board.json
+```
+
+The standalone verifier trusts no D-Voting server. It rebuilds the chain against
+the pinned validator set and redoes the entire count. Stop every process and run
+it again from the saved file. It still verifies:
+
+```bash
+npm run verify -- --file .local/board.json --validators .local/validators.json
+```
+
+Add `--ballot <tracking-code>` to prove a specific ballot is included, or
+`--json` for machine-readable output. A timed presenter's version of all of this
+is in [DEMO.md](DEMO.md).
+
 ### Try the command line instead
 
 ```bash
@@ -260,6 +279,8 @@ there is no safe way to guess which.
 | What the blockchain is *actually* for | [docs/ledger-and-bulletin-board.md](docs/ledger-and-bulletin-board.md) |
 | Defending against a malicious voting app | [docs/cast-as-intended.md](docs/cast-as-intended.md) |
 | Removing the trusted dealer | [docs/threshold-key-generation.md](docs/threshold-key-generation.md) |
+| How the parts fit, with diagrams | [docs/architecture.md](docs/architecture.md) |
+| What it defends against, and what it doesn't | [docs/threat-model.md](docs/threat-model.md) |
 
 Every one of those ends with a **Known Limitations** section. Those are the most
 useful pages to read before a viva — they are where the honest answers are.
