@@ -150,6 +150,21 @@ const validatorSet = JSON.stringify({
   validators: validators.map((v) => ({ id: v.id, publicKey: v.publicKey, url: v.url })),
 });
 
+// The public half only, in the shape the standalone verifier pins against. In a
+// real election each authority publishes its own key; this file stands in for
+// that out-of-band publication.
+await writeFile(
+  join(localDir, "validators.json"),
+  `${JSON.stringify(
+    {
+      validators: validators.map((v) => ({ id: v.id, publicKey: v.publicKey })),
+      quorum: Math.floor((2 * validators.length) / 3) + 1,
+    },
+    null,
+    2,
+  )}\n`,
+);
+
 // --- 6. Demo electoral roll -------------------------------------------------
 // Generated here rather than via `roll:import`, because with in-memory storage
 // a separate import process cannot reach the RA's memory. Only the HMACs go to
@@ -301,6 +316,10 @@ ${trustees
        result can be decrypted. The commission cannot do it for them.
 
   \x1b[1m4. Result\x1b[0m               http://localhost:${BALLOT_BOX_PORT}/results
+
+  \x1b[1m5. Recount it yourself\x1b[0m  (needs none of these servers once saved)
+      npm run verify -- --url http://localhost:${BALLOT_BOX_PORT} \\
+        --validators .local/validators.json --save .local/board.json
 
   Registration API      http://localhost:${REGISTRATION_PORT}/v1/issuer
   Validators            ${validators.map((v) => v.port).join(", ")}

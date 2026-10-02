@@ -293,10 +293,10 @@ observer sees, and it cannot be rewritten.
 
 ## 6. Known limitations (stated honestly)
 
-- **No view changes or fork choice.** This is a linear, append-only log with a
-  quorum rule — not a full BFT protocol. If the scheduled proposer is offline,
-  the chain stalls rather than electing a replacement. Adding PBFT-style view
-  changes is the natural next step.
+- **Not a full BFT protocol.** View changes exist — if the scheduled proposer
+  is offline, the coordinator moves to the next view and the chain stays
+  fork-free (see the view-change section above) — but there is no fork choice
+  rule and no view-change certificate; see the timeout bullet below.
 
 - **No peer discovery or gossip.** Validators are configured statically and the
   block assembler pushes to each of them. There is no membership protocol and no
@@ -318,9 +318,10 @@ observer sees, and it cannot be rewritten.
   other rather than relying on the propose token alone. The services speak plain
   HTTP and expect termination at a proxy.
 
-- **In-memory block store.** Fine for the demo and for tests; the `BlockStore`
-  interface exists so a Postgres or file-backed implementation can be swapped in
-  without touching validation logic (which lives in the `Ledger`, not the store).
+- **File-backed storage only.** `CHAIN_PATH` selects a durable, append-only,
+  fsync'd file store (required in production); tests use the in-memory store.
+  There is no database-backed store. The `BlockStore` interface allows one to
+  be added without touching validation logic, which lives in the `Ledger`.
 
 - **Ballots are stored in full on-chain.** Simple and auditable, but the chain
   grows linearly with the electorate. A production system would likely store

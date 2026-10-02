@@ -122,6 +122,8 @@ cryptography can do about eligibility. The answer is the same as a real
 election's — the roll is frozen, hashed, committed to the chain and published, so
 a name added afterwards changes the digest and cannot be hidden.
 
+Start here: **[architecture](docs/architecture.md)** (diagrams) · **[threat model](docs/threat-model.md)** · **[demo script](DEMO.md)**
+
 Design rationale and honest limitations:
 **[election lifecycle & administration](docs/election-lifecycle-and-administration.md)** ·
 **[registration & blind signatures](docs/registration-and-blind-signatures.md)** ·
@@ -142,7 +144,7 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 514 tests across six workspaces
+npm test          # 526 tests across seven workspaces
 npm run demo      # a complete election, narrated, in ~20s
 npm run dev       # the real system: 11 processes + the web interface
 ```
@@ -173,6 +175,26 @@ node packages/crypto/bench/demo-election.ts 25
 # Performance numbers
 node packages/crypto/bench/election-bench.ts
 ```
+
+### Recount an election yourself
+
+```bash
+npm run verify -- --url http://localhost:8082 --validators validators.json --save board.json
+npm run verify -- --file board.json --validators validators.json   # offline, servers off
+```
+
+[`packages/verifier`](packages/verifier/) downloads (or reads) the bulletin board
+and re-derives everything on your machine: every block's hash linkage, Merkle
+root and validator quorum; the sealed election definition; the close record;
+every ballot's zero-knowledge proofs; the re-voting rule; the homomorphic totals;
+every trustee's decryption proof; and the announced numbers. Optional
+`--roll roll.txt` checks the published roll against the sealed commitment, and
+`--ballot <code>` proves a ballot's inclusion. Exit code 0 means verified.
+
+`--validators` is the trust anchor: signatures prove *which* keys signed, not
+that they are the *right* keys, so the set should come from the validator
+operators rather than from the chain being checked. Without it the verifier
+still runs, but warns. `npm run dev` writes the demo set to `.local/validators.json`.
 
 ### Run the Registration Authority
 
@@ -377,8 +399,8 @@ the `alg: none` / algorithm-confusion class of bypass is structurally impossible
 - [x] Commission console: candidates, roll, freeze, schedule, open, close
 - [x] Electoral roll commitment, publishable and independently recomputable
 - [x] Trustee service and ceremony — each trustee verifies before it decrypts
-- [ ] Threat model writeup, architecture diagrams, demo script
-- [ ] Standalone verifier CLI, so an observer needs none of our servers
+- [x] Threat model writeup, architecture diagrams, demo script
+- [x] Standalone verifier CLI, so an observer needs none of our servers
 
 ---
 
@@ -411,6 +433,7 @@ services/ballot-box/      ballot box + public bulletin board
 services/trustee/         one process per trustee, holding ONE key share
 services/validator/       one process per validator authority
   src/scripts/            generate-validator-key
+packages/verifier/        standalone recount CLI -- trusts no D-Voting server
 docs/                     design notes and rationale
 ```
 

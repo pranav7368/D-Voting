@@ -1,0 +1,24 @@
+{
+  "name": "@dvoting/verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone election verifier: re-checks the whole bulletin board and recounts the result without trusting any D-Voting server.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "dvoting-verify": "./src/cli.ts"
+  },
+  "scripts": {
+    "verify": "node src/cli.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dvoting/ballot-box": "*",
+    "@dvoting/crypto": "*",
+    "@dvoting/ledger": "*",
+    "@dvoting/registration-authority": "*"
+  }
+}
