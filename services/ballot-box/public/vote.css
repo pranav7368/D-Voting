@@ -1,0 +1,144 @@
+/* ===========================================================================
+   Voter page (body.v2). Loaded after app.css, by vote.html only.
+
+   Principles, in order: the task is the first thing on screen; the type is
+   large enough to read without glasses (16px base, nothing under 13px); the
+   ballot looks like a ballot unit, not a settings form; and what each party
+   knows is shown beside every step, because that separation is the system's
+   whole claim.
+   ========================================================================= */
+.v2 { font-size: 16px; }
+.v2 main { max-width: 1120px; }
+.v2 .site-header { min-height: 72px; margin-bottom: 8px; }
+.v2 .brand-word small { font-size: 10px; }
+.v2 .site-header nav a { font-size: 14px; }
+.lang-toggle { flex: none; min-height: 40px; padding: 0 14px; border: 1px solid #cdd8ea; border-radius: 9px; background: #fff; color: var(--navy); font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
+.lang-toggle:hover { background: #f1f5fd; }
+
+.election-bar { margin: 4px 0 18px; }
+.election-bar h1 { margin: 0 0 6px; color: var(--navy); font-size: clamp(24px, 3vw, 32px); line-height: 1.15; letter-spacing: -.03em; }
+.election-bar-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0; color: #4a5b75; font-size: 15px; }
+.status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; border: 1px solid #f0d9a8; background: #fff8e8; color: #7a5200; font-size: 14px; font-weight: 750; }
+.status-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.status-pill[data-phase="voting"] { border-color: #b6e6d6; background: #eaf8f2; color: #066b4c; }
+.status-pill[data-phase="closed"], .status-pill[data-phase="published"] { border-color: #d5deeb; background: #f2f5fa; color: #3d4f6b; }
+
+.v2 .rail { margin: 0 0 22px; }
+.v2 .rail li { min-height: 56px; font-size: 14px; }
+.v2 .rail .rail-number { width: 28px; height: 28px; font-size: 13px; }
+
+.v2 .stage-layout { grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; }
+.v2 .stage-panel { min-height: 0; }
+.v2 h2[tabindex="-1"]:focus { outline: none; }
+.v2 .stage-panel h2 { margin: 0 0 6px; color: var(--navy); font-size: 26px; letter-spacing: -.03em; }
+.stage-lede { margin: 0 0 18px; color: #4f6079; font-size: 16px; line-height: 1.55; }
+.v2 .form-card { padding: 24px; }
+.v2 .form-card label { font-size: 15px; color: #1f3352; }
+.v2 .field-help { margin: 4px 0 8px; color: #5f7088; font-size: 14px; }
+.v2 .form-card input[type="text"] { min-height: 52px; font-size: 18px; letter-spacing: .02em; }
+.v2 button.action, .v2 .form-card button.action { min-height: 50px; padding: 12px 22px; font-size: 16px; border-radius: 11px; }
+.v2 button.action.block { width: 100%; justify-content: center; }
+.v2 .critical-note { font-size: 14px; color: #6a5a3c; }
+.v2 .msg { font-size: 15px; }
+.quiet { margin: 0; color: #5f7088; font-size: 14px; }
+.label-caps { display: block; margin-bottom: 6px; color: #50627d; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.label-caps.ok { color: #0b7a5c; }
+
+/* The ballot sheet: rows like a ballot unit. */
+.ballot-sheet { margin: 0; padding: 0; border: 2px solid #1d2f4f; border-radius: 14px; background: #fff; overflow: hidden; }
+.ballot-sheet legend { float: left; width: 100%; padding: 12px 18px; background: #1d2f4f; color: #fff; font-size: 15px; font-weight: 800; letter-spacing: .02em; }
+.ballot-sheet-rule { font-weight: 600; opacity: .85; }
+.ballot-rows { clear: both; }
+.ballot-row { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) 64px 132px; align-items: center; min-height: 76px; border-top: 1px solid #d9e1ee; cursor: pointer; transition: background .15s; }
+.ballot-row:first-child { border-top: 0; }
+.ballot-row:hover { background: #f5f8ff; }
+.ballot-row[data-selected="true"] { background: #eaf1ff; box-shadow: inset 5px 0 0 var(--primary); }
+.ballot-row[data-nota="true"] { background: #fafbfc; }
+.ballot-serial { align-self: stretch; display: grid; place-items: center; border-right: 1px solid #d9e1ee; color: #1d2f4f; font-size: 20px; font-weight: 800; }
+.ballot-who { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; min-width: 0; }
+.ballot-name { color: #102240; font-size: 19px; font-weight: 750; line-height: 1.25; overflow-wrap: anywhere; }
+.ballot-party { color: #4f6079; font-size: 15px; }
+.ballot-symbol { display: grid; place-items: center; align-self: stretch; border-left: 1px solid #d9e1ee; color: #1d2f4f; }
+.ballot-symbol svg { width: 40px; height: 40px; }
+.ballot-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ballot-target { display: flex; align-items: center; justify-content: center; gap: 9px; align-self: stretch; border-left: 1px solid #d9e1ee; color: #1d4fb8; font-size: 15px; font-weight: 800; }
+.ballot-target-dot { width: 26px; height: 26px; flex: none; border: 2px solid #8aa6d6; border-radius: 50%; background: #fff; transition: background .15s, border-color .15s; }
+.ballot-row[data-selected="true"] .ballot-target-dot { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 4px #fff; }
+.ballot-input[type="checkbox"] ~ .ballot-target .ballot-target-dot { border-radius: 6px; }
+.ballot-input:focus-visible ~ .ballot-target { outline: 3px solid #7da8ff; outline-offset: -5px; border-radius: 10px; }
+.stage-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+
+/* Review */
+.chosen-list { display: grid; gap: 10px; margin: 0 0 20px; padding: 0; list-style: none; }
+.chosen-list li { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 2px solid #b9cdf3; border-radius: 12px; background: #f3f7ff; }
+.chosen-list strong { display: block; color: #102240; font-size: 21px; }
+.chosen-list small { display: block; color: #4f6079; font-size: 15px; }
+.chosen-symbol svg { width: 40px; height: 40px; color: #1d2f4f; }
+.check-code { margin-bottom: 18px; padding-top: 16px; border-top: 1px solid #e3e9f2; }
+.check-code-value { margin: 2px 0 4px; color: #0f2f6b; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 28px; font-weight: 800; letter-spacing: .08em; }
+.full-code { margin-top: 6px; font-size: 14px; color: #5f7088; }
+.full-code summary { cursor: pointer; }
+.full-code code { display: block; margin-top: 6px; padding: 8px 10px; overflow-wrap: anywhere; background: #f5f8fc; font-size: 13px; }
+.audit-card { margin-top: 18px; padding: 20px 22px; border: 1px dashed #b9c7dc; border-radius: 14px; background: #fbfcfe; }
+.audit-card h3 { margin: 0 0 6px; color: #23395c; font-size: 17px; }
+.audit-card p { margin: 0 0 14px; color: #4f6079; font-size: 15px; line-height: 1.55; }
+
+/* Receipt */
+.tracking-code { margin: 0 0 18px; padding: 14px 16px; border: 2px solid #b6e0d2; border-radius: 12px; background: #f1fbf7; color: #0a4f3d; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 22px; font-weight: 800; letter-spacing: .03em; overflow-wrap: anywhere; }
+.receipt-print-title, .receipt-print-meta { display: none; }
+.timeline { display: grid; gap: 0; margin: 0 0 20px; padding: 0; list-style: none; }
+.timeline li { position: relative; display: grid; gap: 2px; padding: 0 0 18px 38px; }
+.timeline li::before { content: ""; position: absolute; left: 0; top: 1px; width: 22px; height: 22px; box-sizing: border-box; border: 2px solid #c4cfdf; border-radius: 50%; background: #fff; }
+.timeline li:not(:last-child)::after { content: ""; position: absolute; left: 10px; top: 26px; bottom: 2px; width: 2px; background: #dbe3ee; }
+.timeline li[data-state="done"]::before { border-color: #0f9d7a; background: #0f9d7a; box-shadow: inset 0 0 0 4px #fff; }
+.timeline li[data-state="done"]::after { background: #8fd8c3; }
+.timeline li[data-state="wait"]::before { border-color: #3d6ce6; border-style: dashed; }
+.timeline strong { color: #1a2d4c; font-size: 16px; }
+.timeline span { color: #53647d; font-size: 14px; line-height: 1.5; }
+.v2 .revote-details { font-size: 15px; }
+
+/* Who knows what */
+.v2 .aside-card h2 { margin: 0 0 6px; color: var(--navy); font-size: 18px; letter-spacing: -.02em; }
+.aside-lede { margin: 0 0 14px; color: #53647d; font-size: 14px; line-height: 1.5; }
+.knows { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.knows li { display: grid; gap: 3px; padding: 11px 13px; border: 1px solid #e3e9f2; border-radius: 11px; background: #fafbfd; transition: background .2s, border-color .2s; }
+.knows li[data-active="true"] { border-color: #b9d3f7; background: #f2f7ff; }
+.knows strong { color: #1d2f4f; font-size: 14px; }
+.knows span { color: #4f6079; font-size: 13px; line-height: 1.5; }
+.fact-list { display: grid; gap: 8px; margin: 0 0 14px; padding-left: 18px; color: #3f5170; font-size: 14px; line-height: 1.5; }
+.fact-list code { font-size: 13px; }
+.aside-link { font-size: 14px; font-weight: 750; }
+
+@media (max-width: 900px) {
+  .v2 .stage-layout { grid-template-columns: 1fr; }
+  .v2 .stage-aside { display: block; }
+  .v2 .aside-card { margin-bottom: 14px; }
+}
+@media (max-width: 560px) {
+  .v2 .site-header { gap: 10px; }
+  .v2 .site-header nav { scrollbar-width: none; }
+  .v2 .site-header nav::-webkit-scrollbar { display: none; }
+  .lang-toggle { margin-left: auto; }
+  .v2 .rail li { min-height: 52px; font-size: 12px; }
+  .v2 .stage-panel h2 { font-size: 23px; }
+  .ballot-row { grid-template-columns: 40px minmax(0, 1fr) 52px 76px; min-height: 72px; }
+  .ballot-serial { font-size: 17px; }
+  .ballot-name { font-size: 17px; }
+  .ballot-symbol svg { width: 32px; height: 32px; }
+  .ballot-target { flex-direction: column; gap: 4px; font-size: 13px; }
+  .stage-actions { flex-direction: column-reverse; align-items: stretch; }
+  .v2 .row button.action { flex: 1 1 100%; }
+  .check-code-value { font-size: 24px; }
+  .tracking-code { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .ballot-row, .ballot-target-dot, .knows li { transition: none; } }
+
+/* Print: the receipt and nothing else. */
+@media print {
+  .v2 .site-header, .v2 .election-bar, .v2 .rail, .no-print, .v2 .stage-lede, .v2 #done-heading, .v2 .label-caps.ok { display: none !important; }
+  body.v2 { background: #fff; }
+  .v2 .stage-layout { display: block; }
+  .v2 .receipt-card { border: 1px solid #000; box-shadow: none; }
+  .receipt-print-title { display: block; margin: 0 0 12px; font-size: 20px; font-weight: 800; }
+  .receipt-print-meta { display: block; margin: 0 0 14px; font-size: 13px; }
+}

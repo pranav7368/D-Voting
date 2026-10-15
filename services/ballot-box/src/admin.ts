@@ -49,6 +49,20 @@ const draftSchema = z
   .object({
     name: z.string().max(200).nullish(),
     candidates: z.array(z.string().min(1).max(120)).min(2).max(64).optional(),
+    // Shape is checked here; meaning (alignment, unique symbols, one NOTA) is
+    // checked by normaliseCandidateDetails so the rule lives in one place.
+    candidateDetails: z
+      .array(
+        z
+          .object({
+            party: z.string().max(120).nullish(),
+            symbol: z.string().max(32).nullish(),
+            nota: z.boolean().optional(),
+          })
+          .strict(),
+      )
+      .max(64)
+      .nullish(),
     minSelections: z.number().int().min(0).max(64).optional(),
     maxSelections: z.number().int().min(1).max(64).optional(),
   })
@@ -98,6 +112,7 @@ export function registerAdminRoutes(app: Hono, options: AdminOptions): void {
       name: election.name,
       phase: published ? "published" : ballotBox.phase,
       candidates: election.candidates,
+      candidateDetails: election.candidateDetails,
       minSelections: election.minSelections,
       maxSelections: election.maxSelections,
       sealed: election.configSealed,
@@ -147,6 +162,9 @@ export function registerAdminRoutes(app: Hono, options: AdminOptions): void {
       const election = ballotBox.updateDraft({
         ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
         ...(parsed.data.candidates !== undefined ? { candidates: parsed.data.candidates } : {}),
+        ...(parsed.data.candidateDetails !== undefined
+          ? { candidateDetails: parsed.data.candidateDetails }
+          : {}),
         ...(parsed.data.minSelections !== undefined
           ? { minSelections: parsed.data.minSelections }
           : {}),
@@ -161,6 +179,7 @@ export function registerAdminRoutes(app: Hono, options: AdminOptions): void {
       return c.json({
         name: election.name,
         candidates: election.candidates,
+        candidateDetails: election.candidateDetails,
         minSelections: election.minSelections,
         maxSelections: election.maxSelections,
         sealed: false,

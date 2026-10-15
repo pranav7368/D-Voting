@@ -42,11 +42,13 @@ import {
   closeEntry,
   configEntry,
   ElectionRecordError,
+  normaliseCandidateDetails,
   normaliseCommitment,
   normaliseElectionName,
   readCloseRecord,
   readElectionRecord,
   validateCandidates,
+  type CandidateDetail,
   type ElectionCloseRecord,
   type ElectionRecord,
   type TrusteeRoster,
@@ -188,6 +190,8 @@ export class BallotBox {
   #election: ElectionParameters;
   /** Display name only. Never bound into a proof -- see ElectionRecord.name. */
   #name: string | null = null;
+  /** Party, symbol and NOTA per candidate. Display only, but sealed. */
+  #details: CandidateDetail[] | null = null;
   #record: ElectionRecord | null = null;
   #closeRecord: ElectionCloseRecord | null = null;
   #issuerKeyId: string | null = null;
@@ -235,6 +239,7 @@ export class BallotBox {
       maxSelections: record.maxSelections,
     };
     this.#name = record.name;
+    this.#details = record.candidateDetails ? record.candidateDetails.map((d) => ({ ...d })) : null;
     this.#closeRecord = await readCloseRecord(this.#config.ledger, record.electionId);
   }
 
@@ -338,7 +343,8 @@ export class BallotBox {
     candidates?: readonly string[];
     minSelections?: number;
     maxSelections?: number;
-  }): ElectionParameters & { name: string | null } {
+    candidateDetails?: unknown;
+  }): ElectionParameters & { name: string | null; candidateDetails: CandidateDetail[] | null } {
     if (this.#record) {
       throw new BallotBoxError(
         "election_sealed",
@@ -353,6 +359,23 @@ export class BallotBox {
     const minSelections = patch.minSelections ?? this.#election.minSelections;
     const maxSelections = patch.maxSelections ?? this.#election.maxSelections;
     const name = patch.name !== undefined ? normaliseElectionName(patch.name) : this.#name;
+
+    // Details describe specific candidates, so a new candidate list without new
+    // details discards the old ones rather than attaching them to other names.
+    let details: CandidateDetail[] | null;
+    try {
+      details =
+        patch.candidateDetails !== undefined
+          ? normaliseCandidateDetails(patch.candidateDetails, candidates.length)
+          : patch.candidates !== undefined
+            ? null
+            : this.#details;
+    } catch (error) {
+      throw new BallotBoxError(
+        "invalid_candidate_details",
+        error instanceof ElectionRecordError ? error.message : "Invalid candidate details.",
+      );
+    }
 
     if (!Number.isInteger(minSelections) || minSelections < 0) {
       throw new BallotBoxError("invalid_selections", "minSelections must be zero or more.");
@@ -377,7 +400,8 @@ export class BallotBox {
       maxSelections,
     };
     this.#name = name;
-    return { ...this.#election, name };
+    this.#details = details;
+    return { ...this.#election, name, candidateDetails: details };
   }
 
   /**
@@ -427,6 +451,7 @@ export class BallotBox {
       electionId: this.#election.electionId,
       name: this.#name,
       candidates,
+      candidateDetails: this.#details,
       minSelections: this.#election.minSelections,
       maxSelections: this.#election.maxSelections,
       group: this.#config.electionPublicKey.group.name,
@@ -773,6 +798,7 @@ export class BallotBox {
       electionId: this.#election.electionId,
       name: this.#name,
       candidates: this.#election.candidates,
+      candidateDetails: this.#details,
       minSelections: this.#election.minSelections,
       maxSelections: this.#election.maxSelections,
       phase: this.phase,

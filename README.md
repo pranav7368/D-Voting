@@ -144,7 +144,7 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 526 tests across seven workspaces
+npm test          # 530 tests across seven workspaces
 npm run demo      # a complete election, narrated, in ~20s
 npm run dev       # the real system: 11 processes + the web interface
 ```

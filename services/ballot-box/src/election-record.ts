@@ -39,6 +39,28 @@ export class ElectionRecordError extends Error {
   override name = "ElectionRecordError";
 }
 
+/**
+ * Ballot symbols a candidate may be shown with.
+ *
+ * A fixed, neutral set rather than uploaded images: an uploaded file is markup
+ * the voter's browser would have to render, and a real party's registered
+ * symbol is not the commission's to reproduce. The browser draws these from
+ * its own copy (public/symbols.js), so the chain records only the name.
+ */
+export const BALLOT_SYMBOLS = [
+  "lamp", "tree", "star", "book", "bicycle", "sun",
+  "boat", "key", "kite", "umbrella", "flower", "clock",
+] as const;
+
+export type BallotSymbol = (typeof BALLOT_SYMBOLS)[number];
+
+export interface CandidateDetail {
+  readonly party: string | null;
+  readonly symbol: BallotSymbol | null;
+  /** "None of the Above": a valid, counted choice that elects nobody. */
+  readonly nota: boolean;
+}
+
 export interface TrusteeRoster {
   readonly threshold: number;
   readonly total: number;
@@ -69,6 +91,16 @@ export interface ElectionRecord {
    */
   readonly name: string | null;
   readonly candidates: readonly string[];
+  /**
+   * How each candidate is presented on the ballot: party, symbol, and whether
+   * the entry is "None of the Above". Aligned index-for-index with
+   * `candidates`. Absent on records sealed before this field existed.
+   *
+   * Sealed for the same reason the names are: a voter who recognises a
+   * candidate by symbol is voting for the symbol, so swapping two symbols after
+   * opening would misdirect votes as surely as swapping two names.
+   */
+  readonly candidateDetails?: readonly CandidateDetail[] | null;
   readonly minSelections: number;
   readonly maxSelections: number;
   readonly group: string;
@@ -230,6 +262,72 @@ export function validateCandidates(candidates: readonly string[]): string[] {
     throw new ElectionRecordError("candidate names must be distinct");
   }
   return cleaned;
+}
+
+/**
+ * Ballot presentation for each candidate, or null when none is given.
+ *
+ * Every entry must line up with a candidate; a symbol may be used once, so two
+ * candidates are never visually interchangeable; and at most one entry may be
+ * NOTA, because two "None of the Above" lines would split the same intent.
+ */
+export function normaliseCandidateDetails(
+  value: unknown,
+  candidateCount: number,
+): CandidateDetail[] | null {
+  if (value === null || value === undefined) return null;
+  if (!Array.isArray(value)) {
+    throw new ElectionRecordError("candidateDetails must be a list");
+  }
+  if (value.length !== candidateCount) {
+    throw new ElectionRecordError(
+      `candidateDetails has ${value.length} entries but the ballot has ${candidateCount} candidates`,
+    );
+  }
+
+  const seenSymbols = new Set<string>();
+  let notaCount = 0;
+  const details = value.map((raw, index): CandidateDetail => {
+    if (typeof raw !== "object" || raw === null) {
+      throw new ElectionRecordError(`candidateDetails[${index}] must be an object`);
+    }
+    const entry = raw as Record<string, unknown>;
+
+    let party: string | null = null;
+    if (entry.party !== null && entry.party !== undefined) {
+      if (typeof entry.party !== "string") {
+        throw new ElectionRecordError(`candidateDetails[${index}].party must be a string`);
+      }
+      const trimmed = entry.party.trim();
+      if (trimmed.length > 120) {
+        throw new ElectionRecordError(`candidateDetails[${index}].party is too long`);
+      }
+      party = trimmed.length > 0 ? trimmed : null;
+    }
+
+    let symbol: BallotSymbol | null = null;
+    if (entry.symbol !== null && entry.symbol !== undefined && entry.symbol !== "") {
+      if (!(BALLOT_SYMBOLS as readonly unknown[]).includes(entry.symbol)) {
+        throw new ElectionRecordError(
+          `candidateDetails[${index}].symbol must be one of: ${BALLOT_SYMBOLS.join(", ")}`,
+        );
+      }
+      symbol = entry.symbol as BallotSymbol;
+      if (seenSymbols.has(symbol)) {
+        throw new ElectionRecordError(`symbol "${symbol}" is used by more than one candidate`);
+      }
+      seenSymbols.add(symbol);
+    }
+
+    const nota = entry.nota === true;
+    if (nota) notaCount++;
+    return { party, symbol, nota };
+  });
+
+  if (notaCount > 1) {
+    throw new ElectionRecordError("at most one candidate can be None of the Above");
+  }
+  return details;
 }
 
 /**

@@ -33,7 +33,7 @@ describe("public verification portal", () => {
     const { app: server } = await app();
     const body = await (await server.request("/vote")).text();
     assert.match(body, /id="revote"/, "no re-vote affordance on the receipt step");
-    assert.match(body, /Vote again with this credential/);
+    assert.match(body, /data-i18n="dn.revote">Vote again</);
 
     // And the client-side piece it depends on: casting must never clear the
     // credential, and there must be a way to reset just the ballot state.

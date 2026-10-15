@@ -627,3 +627,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   .page-public dl.facts dd, .page-admin dl.facts dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .choice, button.action { transition: none; } }
+
+.check-label { display: flex; align-items: center; gap: .55rem; font-weight: 650; cursor: pointer; }
+.check-label input { width: 1.1rem; height: 1.1rem; accent-color: var(--primary); }

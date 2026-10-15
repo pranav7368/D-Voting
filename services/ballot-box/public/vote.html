@@ -4,45 +4,143 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#0b1736" />
-<title>Cast your vote · D-Voting</title>
-<link rel="stylesheet" href="/app.css?v=3" />
+<title>Vote · D-Voting</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/app.css?v=5" />
+<link rel="stylesheet" href="/vote.css?v=3" />
 </head>
-<body class="page-vote">
-<a class="skip-link" href="#main-content">Skip to voting</a>
+<body class="page-vote v2" data-stage="identify">
+<a class="skip-link" href="#main-content" data-i18n="skip">Skip to voting</a>
 <header class="site-header">
-  <a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Secure election platform</small></span></a>
-  <nav aria-label="Main navigation"><a href="/vote" aria-current="page">Cast vote</a><a href="/verify">Verify ballot</a><a href="/results">Results</a><a href="/chain">Public record</a></nav>
-  <span class="header-trust"><span class="status-dot" aria-hidden="true"></span> Independently verifiable</span>
+  <a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Verifiable elections</small></span></a>
+  <nav aria-label="Main navigation"><a href="/vote" aria-current="page" data-i18n="nav.vote">Vote</a><a href="/verify" data-i18n="nav.verify">Verify ballot</a><a href="/results" data-i18n="nav.results">Results</a><a href="/chain" data-i18n="nav.record">Public record</a></nav>
+  <button type="button" id="lang-toggle" class="lang-toggle" data-i18n="lang.switch" data-i18n-label="lang.switchLabel">हिंदी</button>
 </header>
+
 <main id="main-content">
-  <section class="vote-hero" aria-labelledby="hero-heading">
-    <div class="hero-copy"><span class="eyebrow light">A MORE TRANSPARENT WAY TO VOTE</span><h1 id="hero-heading">Your vote.<br /><em>Your voice.</em><br />Verified by you.</h1><p>Make your choice privately, cast your encrypted ballot, and check that it was recorded. Every step is designed to earn your confidence.</p><div class="hero-meta"><span id="election-status" class="hero-status">Checking election status…</span><span class="hero-divider" aria-hidden="true"></span><span id="election-name">Loading election…</span></div></div>
-    <img class="hero-art" src="/ballot-hero.png" alt="" width="640" height="640" /><span class="hero-glow" aria-hidden="true"></span>
+  <section class="election-bar" aria-live="polite">
+    <div class="election-bar-main">
+      <h1 id="election-name" data-i18n="bar.loading">Loading election…</h1>
+      <p class="election-bar-meta"><span id="election-status" class="status-pill">…</span><span id="ballot-rule"></span><span id="election-deadline"></span></p>
+    </div>
   </section>
-  <div class="journey-intro"><div><span class="eyebrow">THE VOTING JOURNEY</span><h2>Cast with confidence</h2><p>Four short steps from your polling card to a receipt you can verify.</p></div><span class="journey-time">Private by design</span></div>
-  <ol class="rail" aria-label="Voting progress"><li id="rail-identify"><span class="rail-number">01</span><span>Identify</span></li><li id="rail-choose"><span class="rail-number">02</span><span>Choose</span></li><li id="rail-confirm"><span class="rail-number">03</span><span>Review</span></li><li id="rail-done"><span class="rail-number">04</span><span>Receipt</span></li></ol>
-  <div class="stage-layout"><div class="stage-main">
-    <section id="stage-identify" class="stage-panel" aria-labelledby="identify-heading">
-      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">01</span><div><span class="eyebrow">STEP ONE</span><h2 id="identify-heading">Let’s confirm your eligibility</h2><p>Use the details on your polling card. Your identity is checked separately from your ballot.</p></div></div>
-      <div class="card form-card"><div class="field"><label for="rollId">Roll number</label><p class="field-help">The number printed on your polling card</p><input id="rollId" type="text" autocomplete="off" spellcheck="false" placeholder="For example, R-100001" /></div><div class="field"><label for="code">Enrolment code</label><p class="field-help">Dashes, spaces, and capital letters are optional</p><input id="code" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your code" /></div><button id="register" class="action" data-label="Continue to ballot">Continue to ballot <span aria-hidden="true">→</span></button><div id="identify-msg" role="status" aria-live="polite"></div></div>
-      <div class="privacy-callout"><span class="callout-symbol" aria-hidden="true">✦</span><div><strong>Your identity stays separate from your vote</strong><p>The registration service signs a hidden credential. It can confirm you may vote without seeing the ballot you cast.</p></div></div>
-      <p class="critical-note"><strong>Keep this tab open until you cast.</strong> Your voting credential exists only in this tab’s memory. Reloading or closing it will lose your in-progress session, and the same polling card cannot issue another credential.</p>
-    </section>
-    <section id="stage-choose" class="stage-panel" aria-labelledby="choose-heading" hidden>
-      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">02</span><div><span class="eyebrow">STEP TWO</span><h2 id="choose-heading">Make your selection</h2><p>Choose from the options on your ballot. Your selection is encrypted on this device.</p></div></div>
-      <div class="card form-card"><div class="ballot-title"><span class="ballot-title-icon" aria-hidden="true">✓</span><div><strong>Official ballot</strong><small id="ballot-rule">Select your choice</small></div></div><div class="choices" id="choices"></div><div class="form-actions"><button id="prepare" class="action" data-label="Review encrypted ballot">Review encrypted ballot <span aria-hidden="true">→</span></button></div><div id="choose-msg" role="status" aria-live="polite"></div></div><p class="note">Nothing is submitted yet. You will review a fingerprint of your encrypted ballot before deciding to cast or audit it.</p>
-    </section>
-    <section id="stage-confirm" class="stage-panel" aria-labelledby="confirm-heading" hidden>
-      <div class="stage-heading"><span class="stage-icon" aria-hidden="true">03</span><div><span class="eyebrow">STEP THREE</span><h2 id="confirm-heading">Review before you cast</h2><p>Your ballot is encrypted and locked to the fingerprint below.</p></div></div>
-      <div class="card form-card"><div class="review-summary"><span class="review-label">Your selection</span><strong id="chosen-summary"></strong></div><div class="field"><label for="commitment">Ballot fingerprint</label><p class="field-help">A unique reference to the encrypted ballot prepared on this device</p><div class="tracking mono" id="commitment" tabindex="0"></div></div><div class="row mt-2"><button id="cast" class="action" data-label="Cast this ballot">Cast this ballot <span aria-hidden="true">→</span></button><button id="audit" class="action secondary" data-label="Audit it instead">Audit it instead</button><button id="change-choice" class="action secondary" data-label="Change selection">Change selection</button></div><div id="confirm-msg" role="status" aria-live="polite"></div></div><p class="critical-note"><strong>Auditing uses up this ballot.</strong> The app reveals how it encrypted your choice so you can check it. That ballot cannot then be counted; you can prepare another one with the same credential.</p>
-    </section>
-    <section id="stage-done" class="stage-panel" aria-labelledby="done-heading" hidden>
-      <div class="stage-heading"><span class="stage-icon done-icon" aria-hidden="true">✓</span><div><span class="eyebrow">BALLOT SUBMITTED</span><h2 id="done-heading">Your ballot is cast</h2><p>Keep your tracking code and use it to check that your ballot is in the public record.</p></div></div>
-      <div class="card form-card receipt-card"><span class="receipt-kicker">YOUR TRACKING RECEIPT</span><label for="tracking">Tracking code</label><div class="tracking" id="tracking" tabindex="0"></div><div class="row"><button id="copy" class="action secondary" data-label="Copy code">Copy code</button><button id="goverify" class="action" data-label="Verify my ballot">Verify my ballot <span aria-hidden="true">→</span></button></div><div id="done-msg" role="status" aria-live="polite"></div></div><p class="note">Use this code to check that your encrypted ballot was recorded once it is sealed. The code does not reveal how you voted.</p><details class="revote-details"><summary>Need to replace this vote?</summary><p>If you voted under pressure, you can cast another ballot while your credential is still in this tab. Only your latest ballot is counted.</p><button id="revote" class="action secondary" data-label="Vote again with this credential">Vote again with this credential</button></details>
-    </section>
-  </div><aside class="stage-aside" aria-label="Election information"><div class="aside-card"><span class="eyebrow">ELECTION AT A GLANCE</span><h3>The election</h3><dl class="facts" id="election-facts"><dt>Status</dt><dd>Loading…</dd></dl></div><div class="aside-card trust-aside"><div class="trust-icon" aria-hidden="true">✧</div><h3>Built for trust, from start to finish</h3><ul><li><span aria-hidden="true">✓</span> Your choice is encrypted before it leaves this device</li><li><span aria-hidden="true">✓</span> A receipt lets you verify it was recorded</li><li><span aria-hidden="true">✓</span> Independent authorities validate the public record</li></ul><a href="/chain">Explore the public record <span aria-hidden="true">↗</span></a></div></aside></div>
-  <section class="explain-band" aria-labelledby="explain-heading"><div><span class="eyebrow light">TRANSPARENCY YOU CAN SEE</span><h2 id="explain-heading">Trust is something you can check.</h2><p>After voting, use your receipt to verify that your encrypted ballot appears in the public record. The count is unlocked only when enough independent trustees participate.</p></div><a class="light-link" href="/verify">How verification works <span aria-hidden="true">→</span></a></section>
-</main><footer class="site-footer"><span>D-Voting · Verifiable elections</span><span>Private choice. Public proof.</span></footer>
-<script type="module" src="/vote-page.js?v=4"></script>
+
+  <ol class="rail" aria-label="Voting progress">
+    <li id="rail-identify"><span class="rail-number">1</span><span data-i18n="rail.identify">Identify</span></li>
+    <li id="rail-choose"><span class="rail-number">2</span><span data-i18n="rail.choose">Choose</span></li>
+    <li id="rail-confirm"><span class="rail-number">3</span><span data-i18n="rail.confirm">Review</span></li>
+    <li id="rail-done"><span class="rail-number">4</span><span data-i18n="rail.done">Receipt</span></li>
+  </ol>
+
+  <div class="stage-layout">
+    <div class="stage-main">
+      <!-- 1. Identify -------------------------------------------------------->
+      <section id="stage-identify" class="stage-panel" aria-labelledby="identify-heading">
+        <h2 id="identify-heading" data-i18n="id.title">Confirm you can vote</h2>
+        <p class="stage-lede" data-i18n="id.lede">Enter the details printed on your polling card.</p>
+        <div class="card form-card">
+          <div class="field">
+            <label for="rollId" data-i18n="id.roll">Roll number</label>
+            <p class="field-help" id="rollId-help" data-i18n="id.rollHelp">On your polling card, for example R-100001</p>
+            <input id="rollId" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="rollId-help" placeholder="R-100001" />
+          </div>
+          <div class="field">
+            <label for="code" data-i18n="id.code">Enrolment code</label>
+            <p class="field-help" id="code-help" data-i18n="id.codeHelp">Dashes, spaces and capital letters do not matter</p>
+            <input id="code" type="text" autocomplete="off" spellcheck="false" aria-describedby="code-help" data-i18n-placeholder="id.codePh" placeholder="Enter your code" />
+          </div>
+          <button id="register" class="action block" type="button"><span data-i18n="id.go">Continue to ballot</span> <span aria-hidden="true">→</span></button>
+          <div id="identify-msg" role="status" aria-live="polite"></div>
+        </div>
+        <p class="critical-note" data-i18n="id.keep">Keep this tab open until you have cast your vote.</p>
+      </section>
+
+      <!-- 2. Choose ---------------------------------------------------------->
+      <section id="stage-choose" class="stage-panel" aria-labelledby="choose-heading" hidden>
+        <h2 id="choose-heading" data-i18n="ch.title">Your ballot</h2>
+        <p class="stage-lede" data-i18n="ch.lede">Select your choice. It is locked (encrypted) on this device before anything is sent.</p>
+        <fieldset class="ballot-sheet">
+          <legend><span data-i18n="ch.sheet">Ballot paper</span> <span id="ballot-sheet-rule" class="ballot-sheet-rule"></span></legend>
+          <div class="ballot-rows" id="choices"></div>
+        </fieldset>
+        <div class="stage-actions">
+          <p class="quiet" data-i18n="ch.nothingSent">Nothing has been sent yet.</p>
+          <button id="prepare" class="action" type="button"><span data-i18n="ch.go">Review my choice</span> <span aria-hidden="true">→</span></button>
+        </div>
+        <div id="choose-msg" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- 3. Review ---------------------------------------------------------->
+      <section id="stage-confirm" class="stage-panel" aria-labelledby="confirm-heading" hidden>
+        <h2 id="confirm-heading" data-i18n="rv.title">Check, then cast</h2>
+        <p class="stage-lede" data-i18n="rv.lede">This is the choice your device has locked. Make sure it is right.</p>
+        <div class="card form-card">
+          <span class="label-caps" data-i18n="rv.yourChoice">Your choice</span>
+          <ul class="chosen-list" id="chosen-summary"></ul>
+          <div class="check-code">
+            <span class="label-caps" data-i18n="rv.check">Ballot check code</span>
+            <p class="check-code-value" id="check-code" aria-describedby="check-code-help"></p>
+            <p class="field-help" id="check-code-help" data-i18n="rv.checkHelp">A short code for this exact locked ballot.</p>
+            <details class="full-code"><summary data-i18n="rv.fullCode">Full fingerprint</summary><code id="commitment" class="mono"></code></details>
+          </div>
+          <div class="row">
+            <button id="cast" class="action" type="button"><span data-i18n="rv.cast">Cast my vote</span> <span aria-hidden="true">→</span></button>
+            <button id="change-choice" class="action secondary" type="button" data-i18n="rv.change">Change my choice</button>
+          </div>
+          <div id="confirm-msg" role="status" aria-live="polite"></div>
+        </div>
+        <div class="audit-card">
+          <h3 data-i18n="rv.auditTitle">Not sure the app locked what you chose?</h3>
+          <p data-i18n="rv.auditBody">You can test this ballot instead of casting it.</p>
+          <button id="audit" class="action secondary" type="button" data-i18n="rv.audit">Test this ballot instead</button>
+        </div>
+      </section>
+
+      <!-- 4. Receipt --------------------------------------------------------->
+      <section id="stage-done" class="stage-panel" aria-labelledby="done-heading" hidden>
+        <span class="label-caps ok" data-i18n="dn.kicker">Vote cast</span>
+        <h2 id="done-heading" data-i18n="dn.title">Your vote has been cast</h2>
+        <p class="stage-lede" data-i18n="dn.lede">Keep your tracking code.</p>
+        <div class="card form-card receipt-card" id="receipt">
+          <p class="receipt-print-title" data-i18n="dn.receiptTitle">D-Voting receipt</p>
+          <span class="label-caps" data-i18n="dn.code">Tracking code</span>
+          <p class="tracking-code" id="tracking"></p>
+          <p class="receipt-print-meta" id="receipt-meta"></p>
+          <ol class="timeline" id="timeline">
+            <li data-step="received"><strong data-i18n="dn.t.received">Received by the ballot box</strong><span id="t-received"></span></li>
+            <li data-step="sealed"><strong data-i18n="dn.t.sealed">Sealed into the public record</strong><span id="t-sealed"></span></li>
+            <li data-step="counted"><strong data-i18n="dn.t.counted">Counted in the published result</strong><span id="t-counted"></span></li>
+          </ol>
+          <div class="row no-print">
+            <button id="goverify" class="action" type="button"><span data-i18n="dn.verify">Verify my ballot</span> <span aria-hidden="true">→</span></button>
+            <button id="copy" class="action secondary" type="button" data-i18n="dn.copy">Copy</button>
+            <button id="print" class="action secondary" type="button" data-i18n="dn.print">Print or save receipt</button>
+          </div>
+          <div id="done-msg" role="status" aria-live="polite"></div>
+        </div>
+        <details class="revote-details no-print">
+          <summary data-i18n="dn.revoteSummary">Need to replace this vote?</summary>
+          <p data-i18n="dn.revoteBody">If someone pressured you, you can vote again from this tab while it is open.</p>
+          <button id="revote" class="action secondary" type="button" data-i18n="dn.revote">Vote again</button>
+        </details>
+      </section>
+    </div>
+
+    <aside class="stage-aside no-print" aria-labelledby="knows-heading">
+      <div class="aside-card knows-card">
+        <h2 id="knows-heading" data-i18n="kn.title">Who knows what, right now</h2>
+        <p class="aside-lede" data-i18n="kn.lede">Each party learns only what it needs.</p>
+        <ul class="knows" id="knows"></ul>
+      </div>
+      <div class="aside-card">
+        <h2 data-i18n="aside.facts">This election</h2>
+        <ul class="fact-list" id="election-facts"></ul>
+        <a class="aside-link" href="/verify" data-i18n="foot.how">How verification works</a>
+      </div>
+    </aside>
+  </div>
+</main>
+<footer class="site-footer no-print"><span>D-Voting</span><span>Private choice. Public proof.</span></footer>
+<script type="module" src="/vote-page.js?v=6"></script>
 </body>
 </html>
