@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Election administration · D-Voting</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/app.css?v=3" />
 </head>
 <body class="page-admin">
@@ -56,10 +57,19 @@
             <span class="hint">optional - e.g. "General Election 2026"</span></label>
           <input id="election-name" type="text" spellcheck="false" />
         </div>
-        <p class="hint">One candidate or party per line, in ballot order.</p>
+        <p class="hint">
+          One candidate per line, in ballot order:
+          <code>Name | Party | symbol</code>. Party and symbol are optional.
+          Symbols: lamp, tree, star, book, bicycle, sun, boat, key, kite,
+          umbrella, flower, clock (each at most once).
+        </p>
         <div class="field mt-2">
           <label for="candidates">Candidates</label>
           <textarea id="candidates" spellcheck="false"></textarea>
+        </div>
+        <div class="field">
+          <label class="check-label"><input id="include-nota" type="checkbox" />
+            Add "None of the Above" (NOTA) as the last option</label>
         </div>
         <div class="field half">
           <label for="min-selections">Minimum choices</label>

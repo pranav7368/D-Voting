@@ -110,7 +110,13 @@ function render(status) {
     ["Trustees", `${status.ceremony.threshold} of ${status.ceremony.total} required to decrypt`],
   ];
   if (status.sealed) {
-    facts.push(["Candidates", status.candidates.join(", ")]);
+    facts.push(["Candidates", status.candidates
+      .map((name, index) => {
+        const detail = status.candidateDetails?.[index];
+        const extra = [detail?.party, detail?.symbol].filter(Boolean).join(", ");
+        return extra ? `${name} (${extra})` : name;
+      })
+      .join("; ")]);
     facts.push(["Roll commitment", status.rollCommitment ?? "none sealed"]);
     if (status.opensAt) facts.push(["Opens at", new Date(status.opensAt).toLocaleString()]);
     if (status.closesAt) facts.push(["Closes at", new Date(status.closesAt).toLocaleString()]);
@@ -128,7 +134,18 @@ function render(status) {
       $("election-name").value = status.name ?? "";
     }
     if (document.activeElement !== $("candidates")) {
-      $("candidates").value = status.candidates.join("\n");
+      const details = status.candidateDetails ?? [];
+      const lines = [];
+      status.candidates.forEach((name, index) => {
+        const detail = details[index];
+        if (detail?.nota) return; // shown as the checkbox instead
+        const parts = [name];
+        if (detail?.party || detail?.symbol) parts.push(detail.party ?? "");
+        if (detail?.symbol) parts.push(detail.symbol);
+        lines.push(parts.join(" | "));
+      });
+      $("candidates").value = lines.join("\n");
+      $("include-nota").checked = details.some((detail) => detail?.nota);
     }
     if (document.activeElement !== $("min-selections")) {
       $("min-selections").value = String(status.minSelections);
@@ -237,10 +254,23 @@ $("token").addEventListener("keydown", (event) => {
 });
 
 $("save-draft").addEventListener("click", async () => {
-  const candidates = $("candidates").value
+  // "Name | Party | symbol", with party and symbol optional.
+  const rows = $("candidates").value
     .split("\n")
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((line) => {
+      const [candidate, party = "", symbol = ""] = line.split("|").map((part) => part.trim());
+      return { candidate, party: party || null, symbol: symbol.toLowerCase() || null, nota: false };
+    });
+  if ($("include-nota").checked) {
+    rows.push({ candidate: "None of the Above", party: null, symbol: null, nota: true });
+  }
+  const candidates = rows.map((row) => row.candidate);
+  const hasDetails = rows.some((row) => row.party || row.symbol || row.nota);
+  const candidateDetails = hasDetails
+    ? rows.map(({ party, symbol, nota }) => ({ party, symbol, nota }))
+    : null;
   const name = $("election-name").value.trim();
   try {
     await api("/v1/admin/election/draft", {
@@ -248,6 +278,7 @@ $("save-draft").addEventListener("click", async () => {
       body: JSON.stringify({
         name: name || null,
         candidates,
+        candidateDetails,
         minSelections: Number($("min-selections").value),
         maxSelections: Number($("max-selections").value),
       }),

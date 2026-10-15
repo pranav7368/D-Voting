@@ -56,31 +56,6 @@ function esc(value) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 }
 
-function show(target, kind, html) {
-  $(target).innerHTML = `<div class="msg ${kind}">${html}</div>`;
-}
-
-function busy(button, on, label) {
-  button.disabled = on;
-  button.innerHTML = on ? `<span class="spinner"></span>${esc(label)}` : button.dataset.label;
-}
-
-function setStage(stage, focus = false) {
-  const order = ["identify", "choose", "confirm", "done"];
-  for (const [index, name] of order.entries()) {
-    const element = $(`rail-${name}`);
-    const current = order.indexOf(stage);
-    element.dataset.state = index < current ? "done" : index === current ? "active" : "";
-    if (index === current) element.setAttribute("aria-current", "step");
-    else element.removeAttribute("aria-current");
-  }
-  for (const name of order) $(`stage-${name}`).hidden = name !== stage;
-  if (focus) {
-    const heading = $(`stage-${stage}`).querySelector("h2");
-    heading.setAttribute("tabindex", "-1");
-    heading.focus();
-  }
-}
 
 async function api(path, options) {
   const response = await fetch(path, options);
@@ -106,86 +81,7 @@ export async function loadElection() {
 
   const group = election.group === "modp2048" ? MODP_2048 : MODP_3072;
   session.electionKey = { group, y: os2ip(fromBase64Url(election.electionPublicKey)) };
-
-  $("election-name").textContent = election.name || election.electionId;
-  const status = $("election-status");
-  if (status) {
-    status.textContent = election.open ? "Voting is open" : phaseLabel(election);
-    status.dataset.open = String(election.open);
-  }
-  const ballotRule = $("ballot-rule");
-  if (ballotRule) {
-    ballotRule.textContent = election.minSelections === election.maxSelections
-      ? `Choose exactly ${election.maxSelections}`
-      : `Choose ${election.minSelections} to ${election.maxSelections}`;
-  }
-  $("election-facts").innerHTML = `
-    ${election.name ? `<dt>Election id</dt><dd>${esc(election.electionId)}</dd>` : ""}
-    <dt>Candidates</dt><dd>${election.candidates.map(esc).join(", ")}</dd>
-    <dt>Choose</dt><dd>${election.minSelections === election.maxSelections
-      ? `exactly ${election.maxSelections}`
-      : `${election.minSelections} to ${election.maxSelections}`}</dd>
-    <dt>Authorities</dt><dd>${election.quorum} of ${election.validators.length} signatures required for each block</dd>
-    <dt>Trustees</dt><dd>${election.trustees.threshold} of ${election.trustees.total} required to decrypt the result</dd>
-    ${election.rollCommitment
-      ? `<dt>Roll commitment</dt><dd>${esc(election.rollCommitment)}</dd>`
-      : ""}
-    <dt>Status</dt><dd>${esc(phaseLabel(election))}</dd>`;
-
-  const selectionType = election.minSelections === 1 && election.maxSelections === 1
-    ? "radio" : "checkbox";
-  $("choices").innerHTML = election.candidates
-    .map(
-      (candidate, index) => `
-      <label class="choice" data-index="${index}">
-        <input type="${selectionType}" name="candidate" value="${index}" />
-        <span>${esc(candidate)}</span>
-      </label>`,
-    )
-    .join("");
-
-  for (const label of document.querySelectorAll(".choice")) {
-    label.addEventListener("change", () => {
-      for (const other of document.querySelectorAll(".choice")) {
-        other.dataset.selected = String(other.querySelector("input").checked);
-      }
-    });
-  }
-
-  if (!election.open) {
-    show("identify-msg", "warn", phaseExplanation(election));
-    $("register").disabled = true;
-  }
   return election;
-}
-
-/** Human wording for each phase, so a voter is never left guessing. */
-function phaseLabel(election) {
-  switch (election.phase) {
-    case "setup":
-      return "not yet opened";
-    case "scheduled":
-      return `opens ${new Date(election.opensAt).toLocaleString()}`;
-    case "voting":
-      return election.closesAt
-        ? `open until ${new Date(election.closesAt).toLocaleString()}`
-        : "open for voting";
-    case "closed":
-      return "closed";
-    default:
-      return String(election.phase);
-  }
-}
-
-function phaseExplanation(election) {
-  switch (election.phase) {
-    case "setup":
-      return "This election has not opened yet. The commission has not sealed the ballot to the chain.";
-    case "scheduled":
-      return `Voting opens at ${new Date(election.opensAt).toLocaleString()}. Come back then.`;
-    default:
-      return "This election is closed. You can still verify a ballot you cast earlier.";
-  }
 }
 
 // --- 2. Prove eligibility and obtain an anonymous credential ---------------
@@ -335,7 +231,6 @@ export async function auditPrepared() {
 export function resetForRevote() {
   session.prepared = null;
   session.trackingCode = null;
-  for (const label of document.querySelectorAll(".choice")) label.dataset.selected = "false";
   for (const input of document.querySelectorAll('input[name="candidate"]')) input.checked = false;
 }
 
@@ -407,4 +302,23 @@ function serialiseBallot(ballot) {
   };
 }
 
-export { session, setStage, show, busy, esc, api, $ };
+/**
+ * A short, human-comparable form of a ballot commitment: twelve digits in
+ * three groups ("4821 0937 5520").
+ *
+ * Digits rather than the base64 fingerprint because a voter has to read it,
+ * possibly aloud, possibly in Devanagari, and compare it with what a second
+ * device shows. Forty bits taken straight from the SHA-256 commitment: enough
+ * that a client cannot cheaply find a different ballot with the same code,
+ * while staying short enough to compare at a glance. The full fingerprint
+ * remains available for machine checks.
+ */
+export function checkCode(commitment) {
+  const bytes = fromBase64Url(commitment);
+  let value = 0n;
+  for (let i = 0; i < 5; i++) value = (value << 8n) | BigInt(bytes[i]);
+  const digits = (value % 1_000_000_000_000n).toString().padStart(12, "0");
+  return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8)}`;
+}
+
+export { session, esc, api, $ };

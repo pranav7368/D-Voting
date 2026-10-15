@@ -1,24 +1,58 @@
-# Frontend design direction
+# Frontend design
 
-This interface is for voters first, with companion views for observers, election administrators, and trustees. The visual system uses a restrained navy, cobalt, and mint palette, generous space, and one primary action per step. The ballot and verification views share navigation, typography, cards, and status language.
+The voter page is designed around one idea: **the system's guarantees should be
+visible while they are happening, in words a first-time voter understands.**
+Everything below follows from that, and each decision cites the finding it
+responds to.
 
-## Research translated into the interface
+## What the research says, and what we did about it
 
-- [GOV.UK question page pattern](https://design-system.service.gov.uk/patterns/question-pages/): each voting step has a clear heading and continue action. The four-step indicator shows progress without becoming navigation.
-- [GOV.UK validation pattern](https://design-system.service.gov.uk/patterns/validation/) and [error message guidance](https://design-system.service.gov.uk/components/error-message/): prompts name the field or choice that needs attention and keep entered values available for correction.
-- [Helios audited ballots](https://vote.heliosvoting.org/helios/elections/f72c510a-c3ca-11f0-80dd-12f2d6ac8e9e/audited-ballots/): the review step explains clearly that auditing reveals and spoils that prepared ballot, so the voter must prepare another to cast.
-- [GOV.UK accessibility strategy](https://design-system.service.gov.uk/accessibility/accessibility-strategy/): progress, errors, and completion use text as well as color. Focus moves to the next step heading, keyboard outlines remain visible, and reduced motion is respected.
+| Finding | Source | Design response |
+|---|---|---|
+| Many voters in early E2E-V systems failed to cast, and some *believed* they had cast when they had not. | Acemyan et al., EVT/WOTE 2014 | The task is the first thing on screen, at every width. Every step ends in an explicit state: "Your vote has been cast", with a timeline that only turns green when the public record confirms it. |
+| Terms like "audit", "verifiability" and "ballot fingerprint" are not understood by voters. | Marky et al., CHI 2018 | Plain words throughout: the ballot is "locked" on the device, the credential is a "voting pass", and the Benaloh challenge is "Test this ballot instead", with one sentence on why it uses the ballot up. |
+| A 43-character base64 fingerprint cannot be compared by a person. | Same; and the cast-as-intended literature generally | The review step shows a **12-digit check code** (`9896 4448 2543`), derived from the same SHA-256 commitment. Digits read the same in any script and can be compared with a second device. The full fingerprint is one click away. |
+| Voters recognise candidates by symbol as much as by name; Indian ballots must offer NOTA. | ECI ballot-unit practice; Supreme Court of India, *PUCL v. Union of India* (2013) | The ballot is laid out like a ballot unit: serial number, name, party, symbol, one large target. NOTA is an optional, sealed last row. |
+| Most voters in India read Hindi or a regional language first. | — | Every voter-facing string exists in English and Hindi and switches **in place**. A reload would destroy the in-memory credential. |
+| Separation of knowledge is the system's central claim, but a footer paragraph does not convey it. | — | A **"Who knows what, right now"** panel updates at each step, stating per party what it has learned and what it never sees. |
+| Small type excludes older voters. | WCAG 2.2 (1.4.4, 1.4.12) | 16px base, nothing under 13px, 50px touch targets, visible focus, reduced-motion support, real form controls so screen readers work. |
 
-## Product decisions
+## Sealed presentation
 
-The illustration is decorative and has an empty alternative text. Live election status, available candidates, quorum, and result states come from the application. The hero never claims that an election is open when it is not. The admin and trustee views retain their own credentials and operations; the design only changes their presentation.
+Party, symbol and NOTA are part of the election definition sealed into block 0
+(`candidateDetails` in `ElectionRecord`). A voter who recognises a candidate by
+symbol is voting for the symbol, so swapping two symbols after opening would
+misdirect votes as surely as swapping two names. The same rules apply as for
+names: editable only in setup, refused once sealed.
 
-The voter journey now supports a ballot that allows multiple selections, including optional selections when the minimum is zero. Review includes a change-selection action that discards only the locally prepared ballot. Credentials and vote choices remain in tab memory under the existing protocol.
+The symbols are a fixed, neutral set drawn by the browser from
+`public/symbols.js` (lamp, tree, star, book, bicycle, sun, boat, key, kite,
+umbrella, flower, clock). No uploaded images, so the record carries no markup;
+none is a real party's registered symbol, and each may be used once.
 
-## Generated image
+## The four steps
 
-The original transparent PNG is `services/ballot-box/public/ballot-hero.png`. It was created with the built-in image generation tool using this prompt:
+1. **Identify.** Polling-card fields, cleared from the page as soon as they are used.
+2. **Choose.** The ballot sheet. Nothing has been sent yet, and the page says so.
+3. **Check, then cast.** The locked choice with its symbol, the check code,
+   *Cast*, *Change*, and, set apart, *Test this ballot instead*.
+4. **Receipt.** Tracking code, a three-stage timeline read from the public
+   bulletin board (received → sealed by *k* of *n* authorities → counted), and
+   copy, verify and print. The printed receipt shows only the code, election,
+   time and where to check it, never the choice.
 
-> A premium 3D editorial illustration for a modern, trustworthy end-to-end verifiable online voting application: a translucent frosted-glass ballot card with three choice lines and one cobalt selection circle, slipping into a translucent ballot box. A luminous verification check and delicate linked data nodes. Calm civic technology aesthetic, soft studio lighting, midnight navy and cobalt with mint and ivory accents. Isolated composition with whitespace. No people, flags, political insignia, logos, letters, readable text, or watermark. Transparent background.
+## Constraints kept
 
-The image is a decorative cue; ballot options, status, and proof data remain live HTML text.
+- Strict CSP: no inline scripts or styles; every icon uses SVG presentation
+  attributes only.
+- Nothing is written to `localStorage` or `sessionStorage`, including the
+  language choice.
+- `voter.js` owns the protocol and `vote-page.js` owns the screen, so the
+  cryptographic flow can be reviewed without reading layout code.
+
+## Still to do
+
+- Second-device verification: the check code becomes a QR code that a phone
+  verifies independently of the voting browser.
+- Hindi for the verify, results and public-record pages.
+- An accessibility audit with a screen reader and with real voters (planned user study).

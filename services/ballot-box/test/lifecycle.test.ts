@@ -137,6 +137,58 @@ describe("opening the poll seals the election", () => {
     assert.equal(described.electionId, ELECTION.electionId);
   });
 
+  it("seals each candidate's party, symbol and NOTA flag with the ballot", async () => {
+    const harness = await createHarness({ leaveInSetup: true });
+    const details = [
+      { party: "Green Party", symbol: "tree", nota: false },
+      { party: null, symbol: "lamp", nota: false },
+      { party: null, symbol: null, nota: true },
+    ];
+    harness.ballotBox.updateDraft({ candidates: ["Asha", "Bharat", "None of the Above"], candidateDetails: details });
+    await harness.ballotBox.openPoll();
+
+    const record = await readElectionRecord(harness.ledger, ELECTION.electionId);
+    assert.deepEqual(record?.candidateDetails, details);
+
+    // A restarted process adopts them from the chain, not from memory.
+    await harness.ballotBox.load();
+    assert.deepEqual((await harness.ballotBox.describe()).candidateDetails, details);
+  });
+
+  it("drops stale candidate details when the candidate list is replaced", async () => {
+    // Details describe specific people; reattaching them to a new list would
+    // put one candidate's symbol next to another's name.
+    const harness = await createHarness({ leaveInSetup: true });
+    harness.ballotBox.updateDraft({
+      candidates: ["Asha", "Bharat"],
+      candidateDetails: [{ symbol: "tree" }, { symbol: "lamp" }],
+    });
+    const updated = harness.ballotBox.updateDraft({ candidates: ["Chandra", "Devi"] });
+    assert.equal(updated.candidateDetails, null);
+  });
+
+  it("REFUSES candidate details that would confuse a voter", async () => {
+    const harness = await createHarness({ leaveInSetup: true });
+    const refuses = (candidateDetails: unknown, pattern: RegExp) =>
+      assert.throws(
+        () => harness.ballotBox.updateDraft({ candidates: ["Asha", "Bharat", "Chandra"], candidateDetails }),
+        (error: BallotBoxError) => error.code === "invalid_candidate_details" && pattern.test(error.message),
+      );
+
+    refuses([{ symbol: "tree" }, { symbol: "tree" }, {}], /more than one candidate/);
+    refuses([{ nota: true }, { nota: true }, {}], /at most one/);
+    refuses([{}, {}], /3 candidates/);
+    refuses([{ symbol: "lotus" }, {}, {}], /must be one of/);
+  });
+
+  it("REFUSES to change candidate details once the poll has opened", async () => {
+    const harness = await createHarness();
+    assert.throws(
+      () => harness.ballotBox.updateDraft({ candidateDetails: [{}, {}, {}] }),
+      (error: BallotBoxError) => error.code === "election_sealed",
+    );
+  });
+
   it("carries NO private material", async () => {
     const harness = await createHarness();
     const record = await readElectionRecord(harness.ledger, ELECTION.electionId);
