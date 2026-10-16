@@ -119,15 +119,23 @@ it. That is not a weakness — it is the privacy boundary working correctly.
 
 - **The audit must run somewhere the malicious app does not control.** If the
   voter verifies on the same compromised device, the app can simply lie about
-  the result. A real deployment needs the check performed on a separate device
-  or by an independent verifier application. This module provides the
-  verification function; *where it runs* is a deployment property, not a
-  cryptographic one. **This is the single most important caveat.**
+  the result. D-Voting now provides that separate place: the review step shows a
+  QR code carrying the ballot id and commitment *before* the voter decides, and
+  the voter's phone (`/check`, `public/check-lib.js`) reads the sealed ballot
+  from the public bulletin board and runs the audit itself. The voter must
+  still choose to scan it; a voter who checks on the voting device alone is
+  back to trusting that device.
 
-- **It cannot stop UI deception.** An app that displays a different candidate
-  list than it encrypts against defeats the audit, because the voter's "intent"
-  is captured through the compromised UI. That is a UI-integrity problem outside
-  the reach of cryptography.
+- **UI deception is now partly caught.** An app that displays a different
+  candidate list than it encrypts against used to defeat the audit entirely,
+  because the voter's intent was captured through the compromised UI. The phone
+  names the encoded candidate from the *sealed* election record and draws the
+  symbol itself, so a voter who tests a ballot sees the real candidate even if
+  the voting screen lied. What remains is a voter who never tests one.
+
+- **The phone trusts the board it reads.** A bulletin board that shows the
+  phone a fabricated record defeats the check. Witnessed checkpoints (next
+  phase) address this.
 
 - **It is probabilistic, not absolute.** A client that cheats rarely may survive
   a given voter's audits. The guarantee is statistical and electorate-wide, not

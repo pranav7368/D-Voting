@@ -62,10 +62,24 @@ Authority and the ballot box. Keep the printed tokens visible.
 
 Use a card from `.local/cards.csv`.
 
-1. Choose a candidate, then press **Check** instead of Cast. "I'm auditing the
-   app: it has to prove it encrypted what I chose. That ballot is now spoiled."
-2. Prepare again and **Cast**. Copy the tracking code.
-3. Open the tracking link (`/verify`). "My browser re-checks the signatures and
+1. Choose a candidate. On the review screen, **scan the QR code with your
+   phone** (or open its link in a second browser window sized like a phone).
+   "My phone now holds this ballot's code. It will check the public record
+   itself; it never asks this computer."
+2. Press **Test this ballot instead**. Within seconds the phone shows "This
+   tested ballot contained: [symbol] the candidate". "The phone opened the
+   ballot from public data. If this computer had changed my vote, the phone
+   would show a different name, and this computer could not stop it."
+3. Choose again, scan the new code, and **Cast**. The phone turns green:
+   "Recorded exactly as shown, sealed in block N, signed by 3 of 4 authorities."
+   "And it cannot show my choice. Nobody can."
+
+   > **Using a real phone?** Browsers enable the cryptography the check page
+   > needs only on HTTPS pages or `localhost`. Over plain `http://<laptop-ip>`
+   > the phone page cannot verify. For a live demo, either use a second browser
+   > window on the laptop, or expose port 8082 through an HTTPS tunnel and open
+   > the voting page through that address so the QR code points there too.
+4. Open the tracking link (`/verify`). "My browser re-checks the signatures and
    the Merkle path itself. It doesn't trust the server's answer."
 
 Cast two or three more ballots with other cards so the count is interesting.

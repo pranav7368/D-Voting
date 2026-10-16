@@ -144,7 +144,7 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 530 tests across seven workspaces
+npm test          # 549 tests across seven workspaces
 npm run demo      # a complete election, narrated, in ~20s
 npm run dev       # the real system: 11 processes + the web interface
 ```
@@ -259,6 +259,8 @@ the double-issuance defence refuse the second attempt.
 | `GET /v1/election` | Public descriptor: phase, candidates, keys, trustees, roll commitment |
 | `POST /v1/ballots` | Cast. `POST /v1/ballots/audit` spoils and publishes an audited one |
 | `GET /v1/bulletin/*` | The board: head, blocks, inclusion proofs, chain verification, result |
+| `GET /v1/bulletin/audits/:id` | Inclusion receipt for a **tested** (spoiled) ballot, with its revealed randomness, for second-device checking |
+| `GET /v1/bulletin/lookup/:id` | Whether a ballot id is sealed yet, and as cast or tested |
 | `GET /v1/ceremony` | Public: the encrypted totals and which trustees have contributed |
 | `POST /v1/ceremony/shares` | A trustee's partial decryptions. **No token** — the proof is the authentication |
 | `POST /v1/admin/election/open` | Seal the election and open the poll. `…/close` ends it |

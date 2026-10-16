@@ -98,9 +98,13 @@ two are what the permissioned ledger adds.
 | Client encrypts a different choice | Benaloh cast-or-audit: the client commits before learning whether it will be audited | `catches the client when it lies about what it encrypted` |
 | Client substitutes a ballot at audit time | Audit checks against the committed fingerprint | `catches the client substituting a different ballot at audit time` |
 | An audited ballot is then cast | Spoiled ballots are sealed and refused forever | `REFUSES to cast a ballot that was audited` |
+| Client lies about the audit result on its own screen | **Second-device check**: before the voter decides, the voting page shows a QR code with the ballot id and commitment; the voter's phone reads the sealed tested ballot from the bulletin board and opens it itself | `CATCHES a device that lies about what it encrypted`, `SHOWS the voter the truth when a device encrypted a different choice` |
+| Client shows one ballot's code and casts another | The phone confirms the sealed cast ballot has exactly the committed ciphertexts | `CATCHES a device that showed one ballot and cast another` |
+| Client shows a fake candidate list | The phone names the encoded candidate from the **sealed** record and draws the symbol itself | `opens an honest tested ballot and shows what it contained` |
 
-**Residual:** the audit must be checked on a device the malicious client does not
-control. See [cast-as-intended](cast-as-intended.md) §5.
+**Residual:** the phone still trusts the bulletin board it reads, and the check
+page as served to it (see §5, assumptions 3 and 6). Detection is probabilistic: a
+voter who never tests a ballot only catches swaps, not altered choices.
 
 ### 4.5 Integrity of the record (A4, A6, A9)
 
@@ -145,8 +149,9 @@ with it.
 3. **The validator set is obtained out of band.** A forger who controls a whole
    chain file can sign it with keys of their own. The verifier reports whether
    it used a pinned set (`--validators`) and warns when it did not.
-4. **The voter checks an audit on an independent device** → otherwise
-   cast-as-intended reduces to trusting the client.
+4. **The voter scans the QR code with a device the voting client does not
+   control** → otherwise cast-as-intended reduces to trusting the client. The
+   check page (`/check`) is built to make this the easy path.
 5. **The published roll is scrutinised.** The commitment proves the roll used is
    the roll published; it does not prove the roll is *correct*.
 6. **The browser bundle is the published one.** Its SHA-256 is published next to

@@ -262,6 +262,7 @@ start("ballot-box", "services/ballot-box", ["src/server.ts"], {
   // moment they cast. A real deployment batches, which is why the ballot box
   // defaults to 25 -- larger blocks also widen the anonymity set within a block.
   BALLOTS_PER_BLOCK: "1",
+  SEAL_INTERVAL_SECONDS: "3",
   REGISTRATION_URL: `http://localhost:${REGISTRATION_PORT}`,
 });
 

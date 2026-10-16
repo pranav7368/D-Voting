@@ -302,23 +302,7 @@ function serialiseBallot(ballot) {
   };
 }
 
-/**
- * A short, human-comparable form of a ballot commitment: twelve digits in
- * three groups ("4821 0937 5520").
- *
- * Digits rather than the base64 fingerprint because a voter has to read it,
- * possibly aloud, possibly in Devanagari, and compare it with what a second
- * device shows. Forty bits taken straight from the SHA-256 commitment: enough
- * that a client cannot cheaply find a different ballot with the same code,
- * while staying short enough to compare at a glance. The full fingerprint
- * remains available for machine checks.
- */
-export function checkCode(commitment) {
-  const bytes = fromBase64Url(commitment);
-  let value = 0n;
-  for (let i = 0; i < 5; i++) value = (value << 8n) | BigInt(bytes[i]);
-  const digits = (value % 1_000_000_000_000n).toString().padStart(12, "0");
-  return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8)}`;
-}
+// One implementation of the check code, shared with the second-device page.
+export { checkCode } from "./check-lib.js";
 
 export { session, esc, api, $ };

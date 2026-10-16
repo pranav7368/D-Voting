@@ -14,8 +14,10 @@
 import {
   loadElection, registerAndGetCredential, prepareSelection, auditPrepared, castPrepared,
   resetForRevote, discardPrepared, checkCode, session, esc, $,
-} from "/voter.js?v=5";
-import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=1";
+} from "/voter.js?v=6";
+import { checkLink } from "/check-lib.js?v=1";
+import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=3";
+import { qrSvg } from "/qrcode.js?v=1";
 import { symbolSvg } from "/symbols.js?v=1";
 
 const STAGES = ["identify", "choose", "confirm", "done"];
@@ -317,6 +319,17 @@ $("prepare").addEventListener("click", async () => {
     const commitment = await withBusy($("prepare"), "ch.busy", () => prepareSelection(selected));
     $("commitment").textContent = commitment;
     $("check-code").textContent = checkCode(commitment);
+    // Shown BEFORE the voter chooses cast or test: the phone must hold the
+    // commitment before this device learns which way the voter will go.
+    const url = checkLink(location.origin, {
+      electionId: session.election.electionId,
+      ballotId: session.prepared.ballot.ballotId,
+      commitment,
+    });
+    $("qr-review").innerHTML = qrSvg(url, t("qr.title"));
+    $("qr-receipt").innerHTML = qrSvg(url, t("qr.receiptTitle"));
+    $("qr-link-review").href = url;
+    $("qr-link-review").textContent = `${location.host}/check…`;
     const items = selected.length
       ? selected.map((index) => {
           const detail = session.election.candidateDetails?.[index];

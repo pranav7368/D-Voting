@@ -133,9 +133,46 @@
 }
 @media (prefers-reduced-motion: reduce) { .ballot-row, .ballot-target-dot, .knows li { transition: none; } }
 
+/* Second-device QR panel (review and receipt steps). */
+.qr-panel { display: flex; gap: 18px; align-items: center; margin: 0 0 20px; padding: 16px; border: 1px solid #cfdcf2; border-radius: 14px; background: #f7faff; }
+.qr-image { flex: none; width: 168px; height: 168px; padding: 6px; border-radius: 10px; background: #fff; box-shadow: 0 1px 0 #e3e9f2; }
+.qr-image svg { display: block; width: 100%; height: 100%; }
+.qr-text h3 { margin: 0 0 6px; color: #1a2d4c; font-size: 17px; }
+.qr-text p { margin: 0 0 8px; color: #4f6079; font-size: 15px; line-height: 1.5; }
+.qr-link { font-size: 13px !important; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .qr-panel { flex-direction: column; align-items: stretch; }
+  .qr-image { align-self: center; width: 200px; height: 200px; }
+}
+
+/* The phone page. */
+.page-check .check-main { max-width: 640px; padding-bottom: 40px; }
+.page-check h1 { margin: 6px 0 6px; color: var(--navy); font-size: 28px; letter-spacing: -.03em; }
+.check-status { display: flex; gap: 16px; margin: 18px 0; padding: 20px; border: 2px solid #d5deeb; border-radius: 16px; background: #fff; }
+.check-status h2 { margin: 0 0 8px; color: #1a2d4c; font-size: 22px; letter-spacing: -.02em; }
+.check-status p { margin: 0 0 10px; color: #3f5170; font-size: 16px; line-height: 1.55; }
+.check-status-icon { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #e6ecf5; }
+.check-status[data-state="waiting"] .check-status-icon, .check-status[data-state="loading"] .check-status-icon { border: 4px solid #d5deeb; border-top-color: var(--primary); background: transparent; animation: spin 1s linear infinite; }
+.check-status[data-state="ok"] { border-color: #8fd8c3; background: #f0fbf7; }
+.check-status[data-state="ok"] .check-status-icon { background: #0f9d7a; box-shadow: inset 0 0 0 10px #0f9d7a, inset 0 0 0 13px #fff; }
+.check-status[data-state="ask"] { border-color: #a9c2ee; background: #f4f8ff; }
+.check-status[data-state="ask"] .check-status-icon { background: var(--primary); }
+.check-status[data-state="bad"] { border-color: #f0a9a3; background: #fff3f2; }
+.check-status[data-state="bad"] .check-status-icon { background: #c2413a; }
+.check-status[data-state="bad"] h2 { color: #9d2620; }
+.check-status[data-state="warn"] { border-color: #ecd29a; background: #fffaf0; }
+.check-status[data-state="warn"] .check-status-icon { background: #d99a1c; }
+.check-ask { font-weight: 800; color: #102240 !important; font-size: 18px !important; }
+.check-yes { padding-left: 12px; border-left: 4px solid #0f9d7a; }
+.check-no { padding-left: 12px; border-left: 4px solid #c2413a; }
+.check-warn { padding: 10px 12px; border-radius: 10px; background: #fff3d6; color: #6b4b00 !important; }
+.check-steps { margin: 8px 0 0; padding-left: 0; list-style: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #3f5170; overflow-wrap: anywhere; }
+.check-steps li[data-ok="false"] { color: #9d2620; }
+@media (prefers-reduced-motion: reduce) { .check-status-icon { animation: none !important; } }
+
 /* Print: the receipt and nothing else. */
 @media print {
-  .v2 .site-header, .v2 .election-bar, .v2 .rail, .no-print, .v2 .stage-lede, .v2 #done-heading, .v2 .label-caps.ok { display: none !important; }
+  .v2 .site-header, .v2 .election-bar, .qr-panel, .v2 .rail, .no-print, .v2 .stage-lede, .v2 #done-heading, .v2 .label-caps.ok { display: none !important; }
   body.v2 { background: #fff; }
   .v2 .stage-layout { display: block; }
   .v2 .receipt-card { border: 1px solid #000; box-shadow: none; }

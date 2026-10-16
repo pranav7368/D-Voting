@@ -184,6 +184,14 @@ export class BallotBox {
   readonly #castCounts = new Map<string, number>();
   /** Ballot ids spoiled by an audit but not yet sealed onto the chain. */
   readonly #spoiled = new Set<string>();
+  /**
+   * Every ballot id accepted by this process, cast or tested. Checked
+   * synchronously at the moment of acceptance, because the checks before it
+   * await, and two copies of one ballot arriving together would otherwise both
+   * pass, leaving a block the ledger must refuse and every ballot behind it
+   * stuck.
+   */
+  readonly #acceptedIds = new Set<string>();
   readonly #adminAudit: { action: string; detail: string; at: string }[] = [];
 
   /** The draft while in setup; a copy of what was sealed once the poll opens. */
@@ -194,6 +202,14 @@ export class BallotBox {
   #details: CandidateDetail[] | null = null;
   #record: ElectionRecord | null = null;
   #closeRecord: ElectionCloseRecord | null = null;
+  /** Set the moment closing starts, so no ballot can land after the close entry. */
+  #closing = false;
+  /**
+   * Every block write runs through this queue, one at a time. Without it, two
+   * seals could build two blocks at the same height, and a ballot accepted
+   * while a seal was replicating could be cleared without ever being sealed.
+   */
+  #writes: Promise<unknown> = Promise.resolve();
   #issuerKeyId: string | null = null;
 
   constructor(config: BallotBoxConfig) {
@@ -275,7 +291,7 @@ export class BallotBox {
   get phase(): ElectionPhase {
     const record = this.#record;
     if (!record) return "setup";
-    if (this.#closeRecord) return "closed";
+    if (this.#closeRecord || this.#closing) return "closed";
 
     const now = Date.now();
     if (record.closesAt && now >= Date.parse(record.closesAt)) return "closed";
@@ -473,7 +489,9 @@ export class BallotBox {
       sealedAt: new Date().toISOString(),
     };
 
-    await this.#appendAndReplicate(await this.#buildBlock([configEntry(record)]));
+    await this.#exclusive(async () =>
+      this.#appendAndReplicate(await this.#buildBlock([configEntry(record)])),
+    );
 
     this.#record = record;
     this.#election = { ...this.#election, candidates };
@@ -497,18 +515,30 @@ export class BallotBox {
       throw new BallotBoxError("already_closed", "This election is already closed.");
     }
 
-    const record: ElectionCloseRecord = {
-      recordVersion: "dvoting/election-closed/v1",
-      electionId: this.#record.electionId,
-      closedAt: new Date().toISOString(),
-      reason,
-      // The block this record lands in, so the last counted ballot is pinned.
-      finalHeight: await this.#config.ledger.height(),
-    };
-
-    await this.sealBlock([closeEntry(record)]);
-    this.#closeRecord = record;
-    return record;
+    // Refuse new ballots before sealing, not after: a ballot accepted while the
+    // close block is being signed would otherwise be sealed after the close.
+    this.#closing = true;
+    const electionId = this.#record.electionId;
+    try {
+      const record = await this.#exclusive(async () => {
+        const record: ElectionCloseRecord = {
+          recordVersion: "dvoting/election-closed/v1",
+          electionId,
+          closedAt: new Date().toISOString(),
+          reason,
+          // The block this record lands in, so the last counted ballot is
+          // pinned. Read inside the write queue, so no seal can slip between.
+          finalHeight: await this.#config.ledger.height(),
+        };
+        await this.#sealPending([closeEntry(record)]);
+        return record;
+      });
+      this.#closeRecord = record;
+      return record;
+    } catch (error) {
+      this.#closing = false;
+      throw error;
+    }
   }
 
   /**
@@ -609,6 +639,7 @@ export class BallotBox {
       throw new BallotBoxError("invalid_ballot", "Ballot failed zero-knowledge verification.");
     }
 
+    this.#acceptNow(ballot.ballotId);
     const supersedes = this.#castCounts.get(fingerprint) ?? 0;
     this.#castCounts.set(fingerprint, supersedes + 1);
 
@@ -699,6 +730,7 @@ export class BallotBox {
 
     // The ballot id is burned either way. An inconsistent audit is evidence of a
     // misbehaving client and is recorded as such, not quietly dropped.
+    this.#acceptNow(ballot.ballotId);
     this.#spoiled.add(ballot.ballotId);
     this.#pending.push({
       kind: SPOILED_ENTRY_KIND,
@@ -713,6 +745,11 @@ export class BallotBox {
         }),
       ),
     });
+
+    // A tested ballot counts toward the next block like a cast one, so the
+    // voter's second device sees it sealed without waiting for other voters.
+    const threshold = this.#config.maxPendingBeforeSeal ?? 0;
+    if (threshold > 0 && this.#pending.length >= threshold) await this.sealBlock();
 
     return {
       ballotId: ballot.ballotId,
@@ -745,29 +782,62 @@ export class BallotBox {
       throw new BallotBoxError("tally_already_published", "A result is already on the chain.");
     }
 
-    // Any ballots still pending are sealed first, so the published tally cannot
-    // omit a ballot that was accepted before the election closed.
-    if (this.#pending.length > 0) await this.sealBlock();
-
-    return this.#appendAndReplicate(
-      await this.#buildBlock([
-        {
-          kind: TALLY_ENTRY_KIND,
-          id: this.#election.electionId,
-          data: tally.encode(),
-        },
-      ]),
-    );
+    return this.#exclusive(async () => {
+      // Any ballots still pending are sealed first, so the published tally
+      // cannot omit a ballot that was accepted before the election closed.
+      await this.#sealPending();
+      return this.#appendAndReplicate(
+        await this.#buildBlock([
+          {
+            kind: TALLY_ENTRY_KIND,
+            id: this.#election.electionId,
+            data: tally.encode(),
+          },
+        ]),
+      );
+    });
   }
 
-  /** Seal all pending entries into a block and append it to the ledger. */
-  async sealBlock(extraEntries: readonly LedgerEntry[] = []): Promise<Block | null> {
-    const entries = [...this.#pending, ...extraEntries];
+  /** Seal pending entries into a block and append it to the ledger. */
+  sealBlock(extraEntries: readonly LedgerEntry[] = []): Promise<Block | null> {
+    return this.#exclusive(() => this.#sealPending(extraEntries));
+  }
+
+  /**
+   * Seal what is pending NOW. Entries accepted while this block is being
+   * signed stay pending for the next one: only the entries actually sealed
+   * are removed. Call only from inside #exclusive.
+   */
+  async #sealPending(extraEntries: readonly LedgerEntry[] = []): Promise<Block | null> {
+    const count = this.#pending.length;
+    const entries = [...this.#pending.slice(0, count), ...extraEntries];
     if (entries.length === 0) return null;
 
     const block = await this.#appendAndReplicate(await this.#buildBlock(entries));
-    this.#pending.length = 0;
+    this.#pending.splice(0, count);
     return block;
+  }
+
+  /**
+   * The last word on acceptance, run with no await between it and the push
+   * that follows. The earlier checks are slow (proof verification), and the
+   * poll may close, or the same ballot arrive twice, while they run.
+   */
+  #acceptNow(ballotId: string): void {
+    if (!this.isOpen) {
+      throw new BallotBoxError("election_closed", "Voting closed while this ballot was being checked.");
+    }
+    if (this.#acceptedIds.has(ballotId)) {
+      throw new BallotBoxError("duplicate_ballot", "This ballot has already been submitted.");
+    }
+    this.#acceptedIds.add(ballotId);
+  }
+
+  /** Run a block write after every earlier one has finished. */
+  #exclusive<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.#writes.then(work);
+    this.#writes = run.catch(() => undefined);
+    return run;
   }
 
   /**

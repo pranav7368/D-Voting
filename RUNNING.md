@@ -22,7 +22,7 @@ up in it.
 ## 1. Run the test suite
 
 ```bash
-npm test              # 530 tests across seven workspaces
+npm test              # 549 tests across seven workspaces
 ```
 
 Per package, if you want to narrow it down:
@@ -30,7 +30,7 @@ Per package, if you want to narrow it down:
 ```bash
 npm test --workspace @dvoting/crypto                  # 174 — the cryptography
 npm test --workspace @dvoting/ledger                  #  90 — chain & consensus
-npm test --workspace @dvoting/ballot-box              # 155 — lifecycle, voting, ceremony, portal, admin
+npm test --workspace @dvoting/ballot-box              # 174 — lifecycle, voting, ceremony, portal, admin, second-device check, sealing races
 npm test --workspace @dvoting/registration-authority  #  73 — roll, credentials, roll administration
 npm test --workspace @dvoting/validator-node          #  16 — HTTP consensus
 npm test --workspace @dvoting/trustee                 #  10 — what a trustee refuses to decrypt
