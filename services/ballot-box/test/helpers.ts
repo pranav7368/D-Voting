@@ -62,6 +62,7 @@ export async function createHarness(
     trustees?: TrusteeSetup;
     /** Sealed into block 0 when the harness opens the poll. */
     witnesses?: WitnessRoster;
+    studyMode?: boolean;
   } = {},
 ): Promise<Harness> {
   const validatorKeys: ValidatorKeyPair[] = [];
@@ -100,6 +101,7 @@ export async function createHarness(
     ledger,
     sealer: new DistributedSealer(ledger, peers),
     ...(options.witnesses ? { witnesses: options.witnesses } : {}),
+    ...(options.studyMode ? { studyMode: true } : {}),
     ...(options.maxPendingBeforeSeal !== undefined
       ? { maxPendingBeforeSeal: options.maxPendingBeforeSeal }
       : {}),

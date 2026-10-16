@@ -155,7 +155,17 @@ export async function registerAndGetCredential(rollId, enrolmentCode) {
 
 export async function prepareSelection(selectedIndices) {
   const chosen = new Set(selectedIndices);
-  const selections = session.election.candidates.map((_, i) => (chosen.has(i) ? 1 : 0));
+  let selections = session.election.candidates.map((_, i) => (chosen.has(i) ? 1 : 0));
+
+  // RESEARCH STUDY ONLY. With the server in study mode and a facilitator's
+  // ?manipulate=1 link, behave like a compromised app: encrypt the NEXT
+  // candidate instead of the one chosen, while the screen keeps showing the
+  // voter's choice and this device's own test reports success. That is the
+  // attack the second-device check exists to catch, and the study measures
+  // whether people do.
+  if (studyManipulation()) {
+    selections = selections.map((_, i, all) => all[(i - 1 + all.length) % all.length]);
+  }
 
   const prepared = await prepareBallot(
     {
@@ -257,6 +267,12 @@ export async function castPrepared() {
   session.prepared = null;
   session.trackingCode = result.trackingCode;
   return result;
+}
+
+/** True only in a study-mode election opened through a facilitator's manipulation link. */
+export function studyManipulation() {
+  return session.election?.studyMode === true &&
+    new URLSearchParams(location.search).get("manipulate") === "1";
 }
 
 // --- serialisation ----------------------------------------------------------

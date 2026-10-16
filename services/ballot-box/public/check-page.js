@@ -9,7 +9,7 @@
  */
 
 import { checkCast, checkCode, checkTested, parseCheckLink } from "/check-lib.js?v=1";
-import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=4";
+import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=5";
 import { electionFingerprint, gatherWitnessEvidence } from "/verify-lib.js?v=2";
 import { symbolSvg } from "/symbols.js?v=1";
 
@@ -24,6 +24,7 @@ let timer = null;
 
 function render() {
   apply();
+  studyBanner(election);
   if (!link) return setStatus("bad", t("ck.badLink"), "");
   if (!election) return;
 
@@ -98,6 +99,20 @@ function render() {
       return li;
     }),
   );
+}
+
+/** A study-mode election says so on every screen, in the voter's language. */
+function studyBanner(election) {
+  if (!election?.studyMode) return;
+  let banner = document.getElementById("study-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "study-banner";
+    banner.className = "study-banner";
+    banner.setAttribute("role", "note");
+    document.body.prepend(banner);
+  }
+  banner.textContent = t("study.banner");
 }
 
 function setStatus(state, title, bodyHtml) {

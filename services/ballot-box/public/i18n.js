@@ -12,6 +12,7 @@
 
 const STRINGS = {
   en: {
+    "study.banner": "Research study. This is not a real election, and this build may misbehave on purpose.",
     "lang.switch": "हिंदी",
     "lang.switchLabel": "पेज हिंदी में देखें",
     "skip": "Skip to voting",
@@ -142,6 +143,7 @@ const STRINGS = {
   },
 
   hi: {
+    "study.banner": "शोध अध्ययन। यह असली चुनाव नहीं है, और यह संस्करण जानबूझकर गड़बड़ी कर सकता है।",
     "lang.switch": "English",
     "lang.switchLabel": "View this page in English",
     "skip": "मतदान पर जाएँ",

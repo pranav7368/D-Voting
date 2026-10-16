@@ -14,9 +14,9 @@
 import {
   loadElection, registerAndGetCredential, prepareSelection, auditPrepared, castPrepared,
   resetForRevote, discardPrepared, checkCode, session, esc, $,
-} from "/voter.js?v=6";
+} from "/voter.js?v=7";
 import { checkLink } from "/check-lib.js?v=1";
-import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=4";
+import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=5";
 import { qrSvg } from "/qrcode.js?v=1";
 import { symbolSvg } from "/symbols.js?v=1";
 
@@ -79,6 +79,20 @@ function setStage(next, focus = false) {
   }
 }
 
+/** A study-mode election says so on every screen, in the voter's language. */
+function studyBanner(election) {
+  if (!election?.studyMode) return;
+  let banner = document.getElementById("study-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "study-banner";
+    banner.className = "study-banner";
+    banner.setAttribute("role", "note");
+    document.body.prepend(banner);
+  }
+  banner.textContent = t("study.banner");
+}
+
 // --- election header, facts and ballot --------------------------------------
 
 function ruleText(election) {
@@ -96,6 +110,7 @@ function candidateLabel(index) {
 function renderElection() {
   const election = session.election;
   if (!election) return;
+  studyBanner(election);
 
   $("election-name").textContent = election.name || election.electionId;
   $("election-name").removeAttribute("data-i18n");

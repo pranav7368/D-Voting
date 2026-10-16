@@ -413,7 +413,8 @@ the `alg: none` / algorithm-confusion class of bypass is structurally impossible
 - [x] Voter interface built on visible guarantees: EVM-style ballot, NOTA, Hindi, "who knows what"
 - [x] Second-device cast-as-intended check: phone verifies tested and cast ballots from public data
 - [x] Witnessed bulletin board: split-view and omission detection on the voter's own device
-- [ ] User study (SUS + manipulation detection) and scale benchmarks
+- [x] Measured evaluation: device, system, phone and audit costs, scaling ([results](papers/evaluation/results.md), `node scripts/bench/evaluate.ts`)
+- [ ] User study: SUS and manipulation detection, N = 30 ([kit ready](docs/user-study/), awaiting ethics approval)
 
 ---
 

@@ -1,0 +1,5 @@
+participant,age_band,gender,tech_comfort_1to5,prior_evoting,order,condition,trial,manipulated,assigned_candidate,detected_before_cast,false_alarm,phone_check,task_seconds,words_if_detected,sus_condition_score,comprehension_score,withdrew
+P01,18-24,,4,no,AB,A,1,no,Rohit Nair,,no,n/a,,,,,
+P01,18-24,,4,no,AB,A,2,yes,Asha Verma,,,n/a,,,,,
+P01,18-24,,4,no,AB,B,1,yes,Meera Iyer,,,unaided,,,,,
+P01,18-24,,4,no,AB,B,2,no,Rohit Nair,,no,unaided,,,,,

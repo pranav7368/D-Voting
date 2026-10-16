@@ -99,6 +99,8 @@ const schema = z.object({
   REGISTRATION_URL: z.string().url().optional(),
   /** JSON {"quorum":2,"witnesses":[{"id","publicKey","url"}]}. Sealed at opening. */
   WITNESSES: z.string().optional(),
+  /** "on" only for a supervised usability study. Refused in production. */
+  STUDY_MODE: z.enum(["on", "off"]).default("off"),
 });
 
 interface ValidatorSetFile {
@@ -114,6 +116,11 @@ async function main(): Promise<void> {
   }
   const config = parsed.data;
 
+  if (config.NODE_ENV === "production" && config.STUDY_MODE === "on") {
+    // Study mode lets a link make the voter page misbehave on purpose. It has
+    // no place anywhere near a real election.
+    throw new Error("STUDY_MODE=on is refused in production");
+  }
   if (config.NODE_ENV === "production" && !config.CHAIN_PATH) {
     throw new Error("CHAIN_PATH is required in production: in-memory storage loses the chain");
   }
@@ -202,6 +209,7 @@ async function main(): Promise<void> {
     maxPendingBeforeSeal: config.BALLOTS_PER_BLOCK,
     ...(config.REGISTRATION_URL ? { registrationUrl: config.REGISTRATION_URL } : {}),
     ...(config.WITNESSES ? { witnesses: validateWitnessRoster(JSON.parse(config.WITNESSES)) } : {}),
+    ...(config.STUDY_MODE === "on" ? { studyMode: true } : {}),
   });
 
   // Adopt whatever the chain already says about this election: whether it was

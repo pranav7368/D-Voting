@@ -167,6 +167,14 @@ export interface BallotBoxConfig {
    * voter alone cannot be vouched for.
    */
   readonly witnesses?: WitnessRoster;
+  /**
+   * Research-study build. Lets a facilitator's link make the voter page act
+   * like a compromised app (encrypt a different choice, lie about its own
+   * test) so a usability study can measure whether participants catch it.
+   * Never on in production: the server refuses to start that way, and every
+   * page shows a banner while it is on.
+   */
+  readonly studyMode?: boolean;
 }
 
 /**
@@ -919,6 +927,7 @@ export class BallotBox {
       // Where the voter's browser goes to prove eligibility. Never proxied.
       registrationUrl: this.#config.registrationUrl ?? null,
       witnesses: this.witnesses,
+      studyMode: this.#config.studyMode === true,
     };
   }
 }
