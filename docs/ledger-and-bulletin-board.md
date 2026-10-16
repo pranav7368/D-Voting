@@ -298,10 +298,11 @@ observer sees, and it cannot be rewritten.
   fork-free (see the view-change section above) — but there is no fork choice
   rule and no view-change certificate; see the timeout bullet below.
 
-- **No peer discovery or gossip.** Validators are configured statically and the
-  block assembler pushes to each of them. There is no membership protocol and no
-  node-to-node propagation — resynchronisation flows through the coordinator
-  rather than between peers.
+- **No peer discovery or gossip between validators.** Validators are configured
+  statically and the block assembler pushes to each of them; resynchronisation
+  flows through the coordinator. Consistency of what *observers* see is handled
+  separately: independent witnesses keep their own replicas and countersign the
+  head, and devices compare against them directly. See [witnesses](witnesses.md).
 
 - **Views advance on demand, not on a timeout.** The coordinator tries the next
   view as soon as a proposer fails to respond. There is no distributed timeout

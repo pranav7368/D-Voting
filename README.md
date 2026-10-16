@@ -80,6 +80,11 @@ polling card ──▶ electoral roll ──▶ blind-signed credential   (unlin
 - **[`services/validator`](services/validator/)** — one process per authority.
   Holds a single Ed25519 key, keeps its own chain replica, and independently
   re-validates every block (including re-verifying ballots) before attesting.
+- **[`services/witness`](services/witness/)** — independent observers (party
+  polling agents, press, civil society) who keep their own copy of the board,
+  refuse to vouch for any rewrite, fork or rollback, and sign checkpoints that
+  voters' devices fetch **directly**. A board shown to one voter alone cannot
+  be vouched for. See [witnessed bulletin board](docs/witnesses.md).
 - **Web interface** — everything is done from the browser.
   - `/vote` — prove eligibility, choose, **encrypt the ballot in the browser**,
     run a cast-or-audit challenge, cast, and get a tracking code. The candidate
@@ -144,7 +149,7 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 549 tests across seven workspaces
+npm test          # 577 tests across eight workspaces
 npm run demo      # a complete election, narrated, in ~20s
 npm run dev       # the real system: 11 processes + the web interface
 ```
@@ -403,6 +408,12 @@ the `alg: none` / algorithm-confusion class of bypass is structurally impossible
 - [x] Trustee service and ceremony — each trustee verifies before it decrypts
 - [x] Threat model writeup, architecture diagrams, demo script
 - [x] Standalone verifier CLI, so an observer needs none of our servers
+
+**Phase 4 — Research contributions**
+- [x] Voter interface built on visible guarantees: EVM-style ballot, NOTA, Hindi, "who knows what"
+- [x] Second-device cast-as-intended check: phone verifies tested and cast ballots from public data
+- [x] Witnessed bulletin board: split-view and omission detection on the voter's own device
+- [ ] User study (SUS + manipulation detection) and scale benchmarks
 
 ---
 

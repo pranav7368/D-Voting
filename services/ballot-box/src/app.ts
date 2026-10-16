@@ -149,6 +149,12 @@ export function createApp(options: AppOptions): Hono {
         // voter's browser talks to it DIRECTLY, so that neither service sees
         // both the voter's identity and their ballot.
         const raOrigin = safeOrigin(ballotBox.registrationUrl);
+        // And every witness's origin: devices fetch checkpoints from the
+        // witnesses themselves, never relayed through this service.
+        const witnessOrigins = (ballotBox.witnesses?.witnesses ?? [])
+          .map((w) => safeOrigin(w.url))
+          .filter((origin): origin is string => origin !== null);
+        const connect = ["'self'", ...(raOrigin ? [raOrigin] : []), ...witnessOrigins].join(" ");
         c.header(
           "Content-Security-Policy",
           [
@@ -156,7 +162,7 @@ export function createApp(options: AppOptions): Hono {
             "script-src 'self'",
             "style-src 'self'",
             "img-src 'self'",
-            `connect-src 'self'${raOrigin ? ` ${raOrigin}` : ""}`,
+            `connect-src ${connect}`,
             "base-uri 'none'",
             "form-action 'none'",
             "frame-ancestors 'none'",
@@ -273,6 +279,29 @@ export function createApp(options: AppOptions): Hono {
         hash: toBase64Url(await blockHash(head.header)),
       },
     });
+  });
+
+  /**
+   * Block headers only, for a range of heights [from, to).
+   *
+   * A device proving that its ballot's block is in the chain a witness
+   * vouched for needs the hash links between the two, not the ballots inside
+   * every block. Headers are small; blocks full of ballots are not.
+   */
+  app.get("/v1/bulletin/headers", async (c) => {
+    const from = Number(c.req.query("from") ?? "0");
+    const height = await ballotBox.ledger.height();
+    const to = Math.min(Number(c.req.query("to") ?? String(height)), height);
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < from || to - from > 1000) {
+      return c.json({ error: "invalid_range", message: "Use 0 <= from <= to, at most 1000 headers." }, 400);
+    }
+    const headers = [];
+    for (let h = from; h < to; h++) {
+      const block = await ballotBox.ledger.getBlock(h);
+      if (!block) break;
+      headers.push({ ...headerToWire(block), hash: toBase64Url(await blockHash(block.header)) });
+    }
+    return c.json({ from, headers });
   });
 
   app.get("/v1/bulletin/blocks/:height", async (c) => {

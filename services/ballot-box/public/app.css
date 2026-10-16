@@ -630,3 +630,4 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 
 .check-label { display: flex; align-items: center; gap: .55rem; font-weight: 650; cursor: pointer; }
 .check-label input { width: 1.1rem; height: 1.1rem; accent-color: var(--primary); }
+.verdict.warn { background: #fff8e8; border: 1px solid #f3dfab; color: #8a5a00; }

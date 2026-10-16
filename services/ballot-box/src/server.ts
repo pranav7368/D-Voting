@@ -32,6 +32,7 @@ import { FileBlockStore } from "@dvoting/ledger/file-store";
 
 import { createApp } from "./app.ts";
 import { BallotBox } from "./ballot-box.ts";
+import { validateWitnessRoster } from "./election-record.ts";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -96,6 +97,8 @@ const schema = z.object({
    * voter's identity and their ballot.
    */
   REGISTRATION_URL: z.string().url().optional(),
+  /** JSON {"quorum":2,"witnesses":[{"id","publicKey","url"}]}. Sealed at opening. */
+  WITNESSES: z.string().optional(),
 });
 
 interface ValidatorSetFile {
@@ -198,6 +201,7 @@ async function main(): Promise<void> {
     sealer: new DistributedSealer(ledger, peers),
     maxPendingBeforeSeal: config.BALLOTS_PER_BLOCK,
     ...(config.REGISTRATION_URL ? { registrationUrl: config.REGISTRATION_URL } : {}),
+    ...(config.WITNESSES ? { witnesses: validateWitnessRoster(JSON.parse(config.WITNESSES)) } : {}),
   });
 
   // Adopt whatever the chain already says about this election: whether it was

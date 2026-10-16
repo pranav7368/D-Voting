@@ -61,6 +61,17 @@ export interface CandidateDetail {
   readonly nota: boolean;
 }
 
+/**
+ * Independent observers who countersign the board's head (see
+ * packages/ledger/src/checkpoint.ts). Sealed so a voter's device knows whose
+ * checkpoints to ask for, and so the list cannot be swapped once voting opens.
+ */
+export interface WitnessRoster {
+  /** How many witnesses must vouch for a head before a device trusts it. */
+  readonly quorum: number;
+  readonly witnesses: readonly { id: string; publicKey: string; url: string }[];
+}
+
 export interface TrusteeRoster {
   readonly threshold: number;
   readonly total: number;
@@ -111,6 +122,8 @@ export interface ElectionRecord {
   readonly trustees: TrusteeRoster;
   readonly validators: readonly { id: string; publicKey: string }[];
   readonly quorum: number;
+  /** Absent on records sealed before witnesses existed. */
+  readonly witnesses?: WitnessRoster | null;
   /**
    * Commitment to the electoral roll as frozen before the poll opened.
    *
@@ -240,6 +253,40 @@ export function assertIdentityMatches(
       )}`,
     );
   }
+}
+
+/** A witness roster that can actually be checked against, or an error. */
+export function validateWitnessRoster(roster: unknown): WitnessRoster {
+  const value = roster as Partial<WitnessRoster> | null;
+  if (!value || !Array.isArray(value.witnesses) || value.witnesses.length === 0) {
+    throw new ElectionRecordError("witnesses must list at least one witness");
+  }
+  const ids = new Set<string>();
+  const witnesses = value.witnesses.map((w, i) => {
+    if (typeof w?.id !== "string" || !/^[A-Za-z0-9_.-]{1,64}$/.test(w.id)) {
+      throw new ElectionRecordError(`witness ${i}: id must be 1-64 letters, digits, . _ or -`);
+    }
+    if (ids.has(w.id)) throw new ElectionRecordError(`witness id "${w.id}" appears twice`);
+    ids.add(w.id);
+    if (typeof w.publicKey !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(w.publicKey)) {
+      throw new ElectionRecordError(`witness "${w.id}": publicKey must be a 32-byte base64url Ed25519 key`);
+    }
+    let url: URL;
+    try {
+      url = new URL(String(w.url));
+    } catch {
+      throw new ElectionRecordError(`witness "${w.id}": url is not a valid URL`);
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      throw new ElectionRecordError(`witness "${w.id}": url must be http(s)`);
+    }
+    return { id: w.id, publicKey: w.publicKey, url: url.origin };
+  });
+  const quorum = value.quorum;
+  if (typeof quorum !== "number" || !Number.isInteger(quorum) || quorum < 1 || quorum > witnesses.length) {
+    throw new ElectionRecordError(`witness quorum must be between 1 and ${witnesses.length}`);
+  }
+  return { quorum, witnesses };
 }
 
 /** Candidate names must be usable as a ballot: present, distinct, and readable. */

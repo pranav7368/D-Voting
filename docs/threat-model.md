@@ -127,7 +127,18 @@ voter who never tests a ballot only catches swaps, not altered choices.
 | A trustee submits a bad decryption share | Chaum-Pedersen proof against the public share sealed in block 0 | `REJECTS a malicious trustee's forged partial decryption` |
 | Announced numbers are false, **even if a quorum of validators signs them** | Full recount: homomorphic totals, decryption proofs, discrete log | `detects a forged result even when validators re-sign the forgery` |
 
-### 4.7 Availability (A1, A6)
+### 4.7 One record for everyone (A4, A9)
+
+| Threat | Defence | Evidence |
+|---|---|---|
+| Box shows one voter a private board, with keys it invented | Witness roster sealed in block 0; devices read it from block 0 and fetch checkpoints from the witnesses directly | `CATCHES a private board shown to one voter` |
+| Box rewrites history after observers saw it | Device recomputes hash links from the voter's block to each witness's head | `CATCHES a board whose history was rewritten after the witnesses saw it` |
+| Board shrinks, forks or rewrites a seen block | Witness raises a sticky alarm and stops signing; devices display it | `ALARMS when the board shrinks`, `shows a witness's alarm to the voter` |
+| Auditor served a truncated board (hidden result or late ballots) | `dvoting-verify --witnesses` requires every witnessed block | `CATCHES a board that omits blocks the witnesses already saw` |
+
+See [witnessed bulletin board](witnesses.md).
+
+### 4.8 Availability (A1, A6)
 
 | Threat | Defence | Residual |
 |---|---|---|
@@ -146,9 +157,13 @@ with it.
 1. **At most *k*−1 trustees collude** → otherwise secrecy fails for every voter.
 2. **At most *f* validators are faulty, *n* > 3*f*** → otherwise the chain can fork
    or stall. Even then, a forged *result* is still caught by the recount.
-3. **The validator set is obtained out of band.** A forger who controls a whole
-   chain file can sign it with keys of their own. The verifier reports whether
-   it used a pinned set (`--validators`) and warns when it did not.
+3. **At least *k* witnesses are honest, and the election fingerprint is
+   published out of band.** Devices take the witness roster from block 0 and ask
+   the witnesses directly, so a private board shown to one voter is rejected. A
+   forger who fabricates an entire election, witnesses included, produces a
+   different block 0, which only a comparison of the 12-digit election
+   fingerprint with the published value reveals. The CLI can additionally pin
+   the validator set (`--validators`).
 4. **The voter scans the QR code with a device the voting client does not
    control** → otherwise cast-as-intended reduces to trusting the client. The
    check page (`/check`) is built to make this the easy path.
