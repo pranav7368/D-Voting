@@ -109,3 +109,16 @@ export {
 } from "./wire.ts";
 
 export { HttpValidatorPeer, type HttpValidatorPeerOptions } from "./http-peer.ts";
+
+export {
+  CheckpointError,
+  checkpointFromWire,
+  checkpointToWire,
+  encodeCheckpoint,
+  signCheckpoint,
+  verifyCheckpoint,
+  type Checkpoint,
+  type SignedCheckpoint,
+  type WireCheckpoint,
+  type WitnessIdentity,
+} from "./checkpoint.ts";

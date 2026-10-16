@@ -5,7 +5,9 @@
  * Every check happens in verify-lib.js, in this browser.
  */
 
-import { verifyBallotReceipt, ed25519Available } from "/verify-lib.js";
+import {
+  electionFingerprint, ed25519Available, gatherWitnessEvidence, verifyBallotReceipt,
+} from "/verify-lib.js?v=2";
 
 const $ = (id) => document.getElementById(id);
 const esc = (v) =>
@@ -13,6 +15,50 @@ const esc = (v) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 let election = null;
+let retry = null;
+
+/**
+ * The witness step. Everything else on this page trusts the board as the
+ * ballot box serves it; this asks independent observers, directly, whether
+ * they saw the same board.
+ */
+function witnessStep(w) {
+  const names = w.vouched.join(", ");
+  let ok = w.ok;
+  let label;
+  let detail;
+  if (w.total === 0) {
+    label = "No independent witnesses";
+    detail = "This election names no witnesses, so a private copy of the record shown only to you could not be detected.";
+  } else if (w.ok) {
+    label = `Witnessed by ${w.vouched.length} of ${w.total} independent observers`;
+    detail = `${names}: their own copies of the record contain this block, and they fetched nothing through the ballot box.`;
+  } else if (w.pending) {
+    label = "Waiting for the independent observers";
+    detail = `${w.vouched.length} of ${w.quorum} needed have confirmed this block so far. This page checks again automatically.`;
+  } else {
+    label = "The independent observers did NOT see this record";
+    detail = w.rejected.map((r) => `${r.witness}: ${r.reason}`).join("; ") ||
+      `only ${w.vouched.length} of the required ${w.quorum} could be reached.`;
+  }
+  const alarms = w.alarms
+    .map((a) => `<div class="msg bad">Observer ${esc(a.witness)} has raised an alarm: ${esc(a.alarm)}</div>`)
+    .join("");
+  return {
+    ok,
+    pending: w.pending,
+    html: `
+      <div class="step ${ok ? "ok" : "bad"}">
+        <span class="mark">${ok ? "&#10003;" : w.pending ? "&hellip;" : "&#10007;"}</span>
+        <span><span class="label">${esc(label)}</span><br /><span class="detail">${esc(detail)}</span></span>
+      </div>${alarms}
+      <div class="step ok">
+        <span class="mark">#</span>
+        <span><span class="label">Election fingerprint ${esc(electionFingerprint(w.genesisHash))}</span><br />
+        <span class="detail">Must match the fingerprint published by the election commission and its observers.</span></span>
+      </div>`,
+  };
+}
 
 for (const link of document.querySelectorAll("nav button[data-href]")) {
   link.addEventListener("click", () => {
@@ -72,6 +118,17 @@ async function verify() {
 
     const receipt = await response.json();
     const result = await verifyBallotReceipt(receipt, election);
+    let witnessed;
+    try {
+      witnessed = witnessStep(await gatherWitnessEvidence(receipt));
+    } catch (error) {
+      witnessed = {
+        ok: false, pending: false,
+        html: `<div class="step bad"><span class="mark">&#10007;</span><span><span class="label">Could not reach the independent observers</span><br /><span class="detail">${esc(String(error.message ?? error))}</span></span></div>`,
+      };
+    }
+    clearTimeout(retry);
+    if (witnessed.pending) retry = setTimeout(verify, 5000);
 
     const steps = result.steps
       .map(
@@ -88,14 +145,19 @@ async function verify() {
 
     $("result").innerHTML = `
       <div class="card">
-        <div class="verdict ${result.ok ? "ok" : "bad"}">
+        <div class="verdict ${result.ok && witnessed.ok ? "ok" : result.ok && witnessed.pending ? "warn" : "bad"}">
           ${
-            result.ok
-              ? "Your ballot is recorded and the record is authentic."
-              : "Verification FAILED."
+            !result.ok
+              ? "Verification FAILED."
+              : witnessed.ok
+                ? "Your ballot is recorded, and independent observers see the same record."
+                : witnessed.pending
+                  ? "Your ballot is recorded. Waiting for independent observers to confirm it."
+                  : "Your ballot is in the record this site showed you, but independent observers did NOT confirm that record."
           }
         </div>
         ${steps}
+        ${witnessed.html}
         <dl class="facts mt-3">
           <dt>Block</dt><dd>${receipt.blockHeight}</dd>
           <dt>Proposed by</dt><dd>${esc(receipt.blockHeader?.proposer ?? "-")}</dd>

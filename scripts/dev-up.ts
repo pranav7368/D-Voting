@@ -63,6 +63,18 @@ const TRUSTEE_LABELS = [
   "Opposition party agent",
   "University observer",
 ];
+/**
+ * Independent witnesses: observers who keep their own copy of the board and
+ * sign checkpoints voters' devices fetch directly. The counterpart of polling
+ * agents signing the account of votes at a booth.
+ */
+const WITNESSES = [
+  { id: "agent-psf", label: "Polling agent, Progressive Students Front" },
+  { id: "agent-cua", label: "Polling agent, Campus Unity Alliance" },
+  { id: "civil-observer", label: "Independent civil-society observer" },
+];
+const WITNESS_QUORUM = 2;
+const WITNESS_BASE_PORT = 8110;
 const VALIDATOR_BASE_PORT = 8090;
 const TRUSTEE_BASE_PORT = 8100;
 const REGISTRATION_PORT = 8081;
@@ -146,6 +158,23 @@ for (const [index, id] of VALIDATORS.entries()) {
     port: VALIDATOR_BASE_PORT + index,
   });
 }
+log("generating witness keys…");
+const witnesses = [];
+for (const [index, w] of WITNESSES.entries()) {
+  const keyPair = await generateValidatorKeyPair(w.id);
+  witnesses.push({
+    ...w,
+    port: WITNESS_BASE_PORT + index,
+    url: `http://localhost:${WITNESS_BASE_PORT + index}`,
+    publicKey: toBase64Url(keyPair.identity.publicKey),
+    privateKey: toBase64Url(await exportPrivateKey(keyPair.privateKey)),
+  });
+}
+const witnessRoster = JSON.stringify({
+  quorum: WITNESS_QUORUM,
+  witnesses: witnesses.map((w) => ({ id: w.id, publicKey: w.publicKey, url: w.url })),
+});
+
 const validatorSet = JSON.stringify({
   validators: validators.map((v) => ({ id: v.id, publicKey: v.publicKey, url: v.url })),
 });
@@ -264,7 +293,22 @@ start("ballot-box", "services/ballot-box", ["src/server.ts"], {
   BALLOTS_PER_BLOCK: "1",
   SEAL_INTERVAL_SECONDS: "3",
   REGISTRATION_URL: `http://localhost:${REGISTRATION_PORT}`,
+  WITNESSES: witnessRoster,
 });
+
+// Each witness belongs to a different observer in deployment and runs on
+// their machine. Each keeps its own durable replica of the board.
+for (const witness of witnesses) {
+  start(witness.id, "services/witness", ["src/server.ts"], {
+    ...baseEnv,
+    PORT: String(witness.port),
+    WITNESS_ID: witness.id,
+    WITNESS_PRIVATE_KEY: witness.privateKey,
+    BALLOT_BOX_URL: `http://localhost:${BALLOT_BOX_PORT}`,
+    CHAIN_PATH: join(localDir, `witness-${witness.id}.jsonl`),
+    SYNC_INTERVAL_SECONDS: "3",
+  });
+}
 
 // Each trustee is its own process holding exactly one share. In deployment they
 // would be on five machines belonging to five organisations; running them here
@@ -316,10 +360,13 @@ ${trustees
        Any ${THRESHOLD} of these ${TRUSTEES} must each contribute a share before the
        result can be decrypted. The commission cannot do it for them.
 
+  \x1b[1mIndependent witnesses\x1b[0m (${WITNESS_QUORUM} of ${witnesses.length} must vouch for a receipt)
+${witnesses.map((w) => `       ${w.label.padEnd(44)} ${w.url}/v1/checkpoint`).join("\n")}
+
   \x1b[1m4. Result\x1b[0m               http://localhost:${BALLOT_BOX_PORT}/results
 
   \x1b[1m5. Recount it yourself\x1b[0m  (needs none of these servers once saved)
-      npm run verify -- --url http://localhost:${BALLOT_BOX_PORT} \\
+      npm run verify -- --url http://localhost:${BALLOT_BOX_PORT} --witnesses \\
         --validators .local/validators.json --save .local/board.json
 
   Registration API      http://localhost:${REGISTRATION_PORT}/v1/issuer

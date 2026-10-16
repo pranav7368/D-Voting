@@ -296,3 +296,161 @@ export async function verifyBallotReceipt(receipt, election) {
 
   return { ok: steps.every((step) => step.ok), steps };
 }
+
+// --- witnesses: one board for everyone --------------------------------------
+//
+// Everything above trusts the board as the ballot box serves it. A box that
+// shows one voter a private board (signed by keys it invented and served
+// alongside) passes every check above. Witnesses close that: independent
+// observers sign checkpoints naming the board's head, this device fetches them
+// from the witnesses DIRECTLY, and a receipt counts as witnessed only if enough
+// witnesses' heads extend its block through hash links this device recomputes.
+// See packages/ledger/src/checkpoint.ts for the protocol.
+
+/** Must match encodeCheckpoint in packages/ledger/src/checkpoint.ts byte for byte. */
+export function encodeCheckpoint(checkpoint, witness) {
+  return concat(
+    lengthPrefixed(utf8("dvoting/checkpoint/v1")),
+    lengthPrefixed(utf8(witness)),
+    lengthPrefixed(utf8(checkpoint.electionId)),
+    u32(checkpoint.height),
+    fromBase64Url(checkpoint.headHash),
+    fromBase64Url(checkpoint.genesisHash),
+    lengthPrefixed(utf8(checkpoint.witnessedAt)),
+  );
+}
+
+async function ed25519Verify(publicKey, signature, message) {
+  if (!publicKey || publicKey.length !== 32 || signature.length !== 64) return false;
+  try {
+    const key = await crypto.subtle.importKey("raw", publicKey, "Ed25519", false, ["verify"]);
+    return await crypto.subtle.verify("Ed25519", key, signature, message);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The election fingerprint: twelve digits of block 0's hash. Block 0 seals
+ * the whole election definition, witnesses included, so this is the value a
+ * commission and its observers publish for anyone to compare.
+ */
+export function electionFingerprint(genesisHashB64) {
+  const bytes = fromBase64Url(genesisHashB64);
+  let value = 0n;
+  for (let i = 0; i < 5; i++) value = (value << 8n) | BigInt(bytes[i]);
+  const digits = (value % 1_000_000_000_000n).toString().padStart(12, "0");
+  return digits.slice(0, 4) + " " + digits.slice(4, 8) + " " + digits.slice(8);
+}
+
+/** The witness roster sealed in block 0's configuration entry, or null. */
+export function rosterFromGenesis(genesisBlock) {
+  const entry = (genesisBlock.entries ?? []).find((e) => e.kind === "election-config");
+  if (!entry) return null;
+  const record = JSON.parse(new TextDecoder().decode(fromBase64Url(entry.data)));
+  return record.witnesses ?? null;
+}
+
+/**
+ * Decide whether a sealed block is vouched for by enough witnesses.
+ *
+ *   blockHeight, blockHeader  the receipt's block (header in wire form)
+ *   genesisHeader             block 0's header, as served
+ *   roster                    { quorum, witnesses: [{ id, publicKey, url }] } from block 0
+ *   responses                 [{ witness, body | null, error? }] from each witness
+ *   headers                   wire headers for heights blockHeight .. (highest checkpoint - 1)
+ *
+ * A witness vouches only if its signature verifies against the sealed key, it
+ * names this election and this genesis, its height covers the block, and its
+ * head hash is reached from the block by hash links recomputed here. A head
+ * the links do not reach means that witness saw a DIFFERENT board.
+ */
+export async function verifyWitnessed({ blockHeight, blockHeader, genesisHeader, roster, responses, headers }) {
+  const genesisHash = toBase64Url(await blockHash(genesisHeader));
+  const result = {
+    ok: false, pending: false, genesisHash, vouched: [], waiting: [], rejected: [], alarms: [],
+    quorum: roster?.quorum ?? 0, total: roster?.witnesses?.length ?? 0,
+  };
+  if (!roster || !Array.isArray(roster.witnesses) || roster.witnesses.length === 0) {
+    result.rejected.push({ witness: "-", reason: "this election names no witnesses" });
+    return result;
+  }
+
+  // Recompute the hash chain from the receipt's block upward.
+  const blockHashB64 = toBase64Url(await blockHash(blockHeader));
+  const hashAt = new Map([[blockHeight, blockHashB64]]);
+  const byHeight = new Map(headers.map((h) => [h.height, h]));
+  if (byHeight.has(blockHeight) && toBase64Url(await blockHash(byHeight.get(blockHeight))) !== blockHashB64) {
+    result.rejected.push({ witness: "-", reason: "the served header chain does not contain this receipt's block" });
+    return result;
+  }
+  let previous = blockHashB64;
+  for (let h = blockHeight + 1; byHeight.has(h); h++) {
+    const header = byHeight.get(h);
+    if (header.previousHash !== previous) break; // the chain stops linking here
+    previous = toBase64Url(await blockHash(header));
+    hashAt.set(h, previous);
+  }
+
+  const keys = new Map(roster.witnesses.map((w) => [w.id, fromBase64Url(w.publicKey)]));
+  for (const witness of roster.witnesses) {
+    const response = responses.find((r) => r.witness === witness.id);
+    const body = response?.body;
+    if (!body?.checkpoint) {
+      result.waiting.push({ witness: witness.id, reason: response?.error ?? "no checkpoint yet" });
+      continue;
+    }
+    if (body.alarm) result.alarms.push({ witness: witness.id, alarm: body.alarm });
+    const cp = body.checkpoint;
+    const signed = await ed25519Verify(keys.get(witness.id), fromBase64Url(cp.signature), encodeCheckpoint(cp, witness.id));
+    if (!signed || cp.witness !== witness.id) {
+      result.rejected.push({ witness: witness.id, reason: "signature does not verify against the sealed key" });
+    } else if (cp.electionId !== genesisHeader.electionId) {
+      result.rejected.push({ witness: witness.id, reason: "checkpoint is for election " + cp.electionId });
+    } else if (cp.genesisHash !== genesisHash) {
+      result.rejected.push({ witness: witness.id, reason: "witness saw a different election definition (block 0)" });
+    } else if (cp.height <= blockHeight) {
+      result.waiting.push({ witness: witness.id, reason: "has seen " + cp.height + " blocks; this ballot is in block " + blockHeight });
+    } else if (hashAt.get(cp.height - 1) !== cp.headHash) {
+      result.rejected.push({ witness: witness.id, reason: "witness saw a different board: its head is not reached from this block" });
+    } else {
+      result.vouched.push(witness.id);
+    }
+  }
+  result.ok = result.vouched.length >= result.quorum;
+  result.pending = !result.ok && result.vouched.length + result.waiting.length >= result.quorum;
+  return result;
+}
+
+/**
+ * Collect everything verifyWitnessed needs, fetching checkpoints from each
+ * witness's own address and only headers and block 0 from the ballot box.
+ */
+export async function gatherWitnessEvidence(receipt, { base = "", fetchImpl = fetch } = {}) {
+  const getJson = async (url) => {
+    const response = await fetchImpl(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return response.json();
+  };
+  const genesis = await getJson(base + "/v1/bulletin/blocks/0");
+  const roster = rosterFromGenesis(genesis);
+  const responses = await Promise.all(
+    (roster?.witnesses ?? []).map(async (w) => {
+      try {
+        return { witness: w.id, body: await getJson(w.url + "/v1/checkpoint") };
+      } catch (error) {
+        return { witness: w.id, body: null, error: "unreachable (" + error.message + ")" };
+      }
+    }),
+  );
+  const top = Math.max(receipt.blockHeight + 1, ...responses.map((r) => r.body?.checkpoint?.height ?? 0));
+  const { headers } = await getJson(base + "/v1/bulletin/headers?from=" + receipt.blockHeight + "&to=" + top);
+  return verifyWitnessed({
+    blockHeight: receipt.blockHeight,
+    blockHeader: receipt.blockHeader,
+    genesisHeader: genesis.header,
+    roster,
+    responses,
+    headers,
+  });
+}

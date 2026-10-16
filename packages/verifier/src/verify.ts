@@ -44,11 +44,14 @@ import {
 import {
   InMemoryBlockStore,
   Ledger,
+  blockHash,
   createValidatorSet,
   encodeEntry,
   validatorFingerprint,
+  verifyCheckpoint,
   verifyMerkleProof,
   type Block,
+  type SignedCheckpoint,
   type ValidatorSet,
 } from "@dvoting/ledger";
 import {
@@ -85,6 +88,12 @@ export interface VerifyOptions {
   readonly rollIds?: readonly string[];
   /** Tracking codes (ballot ids) whose inclusion should be proven. */
   readonly ballotIds?: readonly string[];
+  /**
+   * Checkpoints fetched from the election's witnesses. When given, the board
+   * must contain every block the witnesses saw, exactly as they saw it: a
+   * board missing blocks, or differing from theirs, is not the public record.
+   */
+  readonly checkpoints?: readonly SignedCheckpoint[];
 }
 
 export interface Check {
@@ -103,6 +112,8 @@ export interface ElectionVerificationReport {
   readonly name: string | null;
   readonly trustAnchor: "pinned" | "chain";
   readonly validatorFingerprint: string | null;
+  /** Twelve digits of block 0's hash, for comparison with the published value. */
+  readonly electionFingerprint: string | null;
   readonly blockCount: number;
   readonly checks: readonly Check[];
   readonly warnings: readonly string[];
@@ -119,6 +130,7 @@ export async function verifyElection(
   let electionId: string | null = null;
   let name: string | null = null;
   let fingerprint: string | null = null;
+  let electionPrint: string | null = null;
   let results: { candidate: string; votes: number }[] | null = null;
   const trustAnchor = options.pinnedValidators ? "pinned" : "chain";
 
@@ -129,6 +141,7 @@ export async function verifyElection(
     name,
     trustAnchor,
     validatorFingerprint: fingerprint,
+    electionFingerprint: electionPrint,
     blockCount: blocks.length,
     checks,
     warnings,
@@ -228,6 +241,51 @@ export async function verifyElection(
     ok: true,
     detail: `${blocks.length} blocks, ${entryCount} entries`,
   });
+
+  const genesisHash = await blockHash(blocks[0]!.header);
+  electionPrint = twelveDigits(genesisHash);
+
+  // --- 2b. Independent witnesses. --------------------------------------------
+  if (options.checkpoints) {
+    const roster = record.witnesses ?? null;
+    if (!roster) {
+      return fail("Board matches what the independent witnesses saw", "this election names no witnesses");
+    }
+    const label = "Board matches what the independent witnesses saw";
+    const vouched: string[] = [];
+    let highest = 0;
+    for (const signed of options.checkpoints) {
+      const witness = roster.witnesses.find((w) => w.id === signed.witness);
+      if (!witness) {
+        warnings.push(`Ignored a checkpoint from "${signed.witness}", who is not in the sealed witness roster.`);
+        continue;
+      }
+      if (!(await verifyCheckpoint(signed, { id: witness.id, publicKey: fromBase64Url(witness.publicKey) }))) {
+        return fail(label, `${witness.id}'s checkpoint does not verify against its sealed key`);
+      }
+      const cp = signed.checkpoint;
+      if (cp.electionId !== electionId || !sameBytes(cp.genesisHash, genesisHash)) {
+        return fail(label, `${witness.id} watched a different election definition (block 0)`);
+      }
+      if (cp.height > blocks.length) {
+        // The decisive omission check: a board that hides blocks a witness
+        // already saw (the result, say, or late ballots) is not the record.
+        return fail(label, `${witness.id} saw ${cp.height} blocks, this board has only ${blocks.length}`);
+      }
+      if (!sameBytes(await blockHash(blocks[cp.height - 1]!.header), cp.headHash)) {
+        return fail(label, `block ${cp.height - 1} differs from the one ${witness.id} saw`);
+      }
+      if (!vouched.includes(witness.id)) vouched.push(witness.id);
+      highest = Math.max(highest, cp.height);
+    }
+    if (vouched.length < roster.quorum) {
+      return fail(label, `only ${vouched.length} of the required ${roster.quorum} witnesses vouched for this board`);
+    }
+    checks.push({ label, ok: true, detail: `${vouched.length} of ${roster.witnesses.length}: ${vouched.join(", ")}` });
+    if (highest < blocks.length) {
+      warnings.push(`${blocks.length - highest} newest block(s) are not yet covered by any witness checkpoint.`);
+    }
+  }
 
   // --- 3. The election's definition and lifecycle. --------------------------
   const group = groupByName(record.group);
@@ -415,6 +473,18 @@ function sharesKey(shares: readonly { index: number; publicShare: string }[]): s
     .map((share) => `${share.index}:${share.publicShare}`)
     .sort()
     .join(",");
+}
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
+/** Same rendering as the voter-facing pages, so the numbers can be compared. */
+function twelveDigits(hash: Uint8Array): string {
+  let value = 0n;
+  for (let i = 0; i < 5; i++) value = (value << 8n) | BigInt(hash[i]!);
+  const digits = (value % 1_000_000_000_000n).toString().padStart(12, "0");
+  return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8)}`;
 }
 
 function errorText(error: unknown): string {

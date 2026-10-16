@@ -132,6 +132,13 @@ const STRINGS = {
     "ck.loadErr": "Could not reach the public record: {reason}",
     "ck.wrongElection": "This code is for a different election than this site is running.",
     "ck.insecure": "This page must be opened over a secure (https) address to check a ballot. Ask the election officials for the correct link.",
+    "wt.confirmed": "Confirmed by {k} of {n} independent observers ({names}). Each checked its own copy of the record; this phone asked them directly.",
+    "wt.pending": "Waiting for the independent observers to confirm this block. This page checks again by itself.",
+    "wt.failed": "The independent observers did not see this record",
+    "wt.failedBody": "Your ballot was shown on a record that the observers never signed. Someone may be showing you a private copy. Report this to the election officials, with your tracking code.",
+    "wt.none": "This election has no independent observers, so a private copy of the record shown only to you could not be detected.",
+    "wt.alarm": "Observer {w} has raised an alarm: {alarm}",
+    "wt.fingerprint": "Election fingerprint {fp}. It must match the one published by the election commission and the observers.",
   },
 
   hi: {
@@ -255,6 +262,13 @@ const STRINGS = {
     "ck.loadErr": "सार्वजनिक रिकॉर्ड तक नहीं पहुँच सके: {reason}",
     "ck.wrongElection": "यह कोड किसी दूसरे चुनाव का है, इस साइट पर चल रहे चुनाव का नहीं।",
     "ck.insecure": "मतपत्र जाँचने के लिए यह पेज सुरक्षित (https) पते पर खोला जाना चाहिए। सही लिंक के लिए चुनाव अधिकारियों से पूछें।",
+    "wt.confirmed": "{n} में से {k} स्वतंत्र पर्यवेक्षकों ({names}) द्वारा पुष्टि। हर एक ने रिकॉर्ड की अपनी प्रति जाँची; इस फ़ोन ने उनसे सीधे पूछा।",
+    "wt.pending": "स्वतंत्र पर्यवेक्षकों द्वारा इस ब्लॉक की पुष्टि की प्रतीक्षा। यह पेज अपने आप दोबारा जाँचेगा।",
+    "wt.failed": "स्वतंत्र पर्यवेक्षकों ने यह रिकॉर्ड नहीं देखा",
+    "wt.failedBody": "आपका मतपत्र ऐसे रिकॉर्ड पर दिखाया गया जिस पर पर्यवेक्षकों ने कभी हस्ताक्षर नहीं किए। हो सकता है कोई आपको निजी प्रति दिखा रहा हो। अपने ट्रैकिंग कोड के साथ चुनाव अधिकारियों को सूचित करें।",
+    "wt.none": "इस चुनाव में कोई स्वतंत्र पर्यवेक्षक नहीं हैं, इसलिए केवल आपको दिखाई गई निजी प्रति पकड़ी नहीं जा सकती।",
+    "wt.alarm": "पर्यवेक्षक {w} ने चेतावनी दी है: {alarm}",
+    "wt.fingerprint": "चुनाव फ़िंगरप्रिंट {fp}। यह चुनाव आयोग और पर्यवेक्षकों द्वारा प्रकाशित फ़िंगरप्रिंट से मेल खाना चाहिए।",
   },
 };
 

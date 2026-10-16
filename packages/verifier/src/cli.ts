@@ -12,6 +12,8 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 
+import { checkpointFromWire, type Block, type SignedCheckpoint } from "@dvoting/ledger";
+
 import { fetchBlocks, readExport, writeExport } from "./source.ts";
 import { verifyElection, type ElectionVerificationReport, type PinnedValidators } from "./verify.ts";
 
@@ -25,6 +27,11 @@ Trust anchor:
   --validators <path>   JSON {"validators":[{"id","publicKey"}],"quorum":n}
                         obtained out of band. Without it, the validator set is
                         read from the chain itself and the run warns.
+
+Independent witnesses:
+  --witnesses           fetch a checkpoint from every witness sealed in block 0
+                        and require the board to contain what they saw
+  --checkpoint <path>   a saved checkpoint file instead (repeatable)
 
 Optional checks:
   --roll <path>         published electoral roll, one identifier per line
@@ -46,6 +53,8 @@ async function main(): Promise<number> {
         validators: { type: "string" },
         roll: { type: "string" },
         ballot: { type: "string", multiple: true },
+        witnesses: { type: "boolean", default: false },
+        checkpoint: { type: "string", multiple: true },
         save: { type: "string" },
         json: { type: "boolean", default: false },
         help: { type: "boolean", default: false },
@@ -80,7 +89,12 @@ async function main(): Promise<number> {
           .filter((line) => line.length > 0)
       : undefined;
 
+    const checkpoints = args.witnesses || args.checkpoint
+      ? await collectCheckpoints(blocks, args.witnesses ?? false, args.checkpoint ?? [])
+      : undefined;
+
     const report = await verifyElection(blocks, {
+      ...(checkpoints ? { checkpoints } : {}),
       ...(pinnedValidators ? { pinnedValidators } : {}),
       ...(rollIds ? { rollIds } : {}),
       ...(args.ballot ? { ballotIds: args.ballot } : {}),
@@ -94,6 +108,34 @@ async function main(): Promise<number> {
   }
 }
 
+/**
+ * Checkpoints from the witnesses sealed in block 0, fetched from each
+ * witness's own address, plus any saved checkpoint files.
+ */
+async function collectCheckpoints(blocks: readonly Block[], live: boolean, files: readonly string[]): Promise<SignedCheckpoint[]> {
+  const out: SignedCheckpoint[] = [];
+  for (const path of files) {
+    const body = JSON.parse(await readFile(path, "utf8")) as { checkpoint?: unknown };
+    out.push(checkpointFromWire(body.checkpoint ?? body));
+  }
+  if (live) {
+    const config = blocks[0]?.entries.find((e) => e.kind === "election-config");
+    const record = config ? (JSON.parse(new TextDecoder().decode(config.data)) as { witnesses?: { witnesses: { id: string; url: string }[] } }) : null;
+    for (const witness of record?.witnesses?.witnesses ?? []) {
+      try {
+        const response = await fetch(`${witness.url}/v1/checkpoint`, { signal: AbortSignal.timeout(15_000) });
+        const body = (await response.json()) as { checkpoint?: unknown; alarm?: string | null };
+        if (body.alarm) process.stderr.write(`dvoting-verify: witness ${witness.id} reports an ALARM: ${body.alarm}\n`);
+        if (body.checkpoint) out.push(checkpointFromWire(body.checkpoint));
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        process.stderr.write(`dvoting-verify: witness ${witness.id} unreachable: ${reason}\n`);
+      }
+    }
+  }
+  return out;
+}
+
 function render(report: ElectionVerificationReport): string {
   const lines: string[] = [];
   lines.push("");
@@ -102,6 +144,7 @@ function render(report: ElectionVerificationReport): string {
   lines.push(`  Blocks     ${report.blockCount}`);
   lines.push(`  Anchor     ${report.trustAnchor === "pinned" ? "pinned validator set" : "chain (NOT pinned)"}`);
   if (report.validatorFingerprint) lines.push(`  Validators ${report.validatorFingerprint}`);
+  if (report.electionFingerprint) lines.push(`  Fingerprint ${report.electionFingerprint}  (compare with the published value)`);
   lines.push("");
 
   for (const check of report.checks) {

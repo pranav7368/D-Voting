@@ -52,6 +52,7 @@ import {
   type ElectionCloseRecord,
   type ElectionRecord,
   type TrusteeRoster,
+  type WitnessRoster,
 } from "./election-record.ts";
 import { auditSecretToWire, ballotToWire } from "./wire.ts";
 
@@ -160,6 +161,12 @@ export interface BallotBoxConfig {
    * timing, which is exactly the link blind signatures exist to destroy.
    */
   readonly registrationUrl?: string;
+  /**
+   * Independent witnesses, sealed into the election at opening. Voters'
+   * devices fetch the witnesses' checkpoints directly, so a board shown to one
+   * voter alone cannot be vouched for.
+   */
+  readonly witnesses?: WitnessRoster;
 }
 
 /**
@@ -309,6 +316,11 @@ export class BallotBox {
 
   get electionPublicKeyGroup() {
     return this.#config.electionPublicKey.group;
+  }
+
+  /** The sealed witness roster once open; the configured one before. */
+  get witnesses(): WitnessRoster | null {
+    return this.#record ? (this.#record.witnesses ?? null) : (this.#config.witnesses ?? null);
   }
 
   get registrationUrl(): string | null {
@@ -483,6 +495,12 @@ export class BallotBox {
         publicKey: toBase64Url(v.publicKey),
       })),
       quorum: this.#config.ledger.validatorSet.quorum,
+      witnesses: this.#config.witnesses
+        ? {
+            quorum: this.#config.witnesses.quorum,
+            witnesses: this.#config.witnesses.witnesses.map((w) => ({ ...w })),
+          }
+        : null,
       rollCommitment,
       opensAt,
       closesAt,
@@ -900,6 +918,7 @@ export class BallotBox {
       pending: this.#pending.length,
       // Where the voter's browser goes to prove eligibility. Never proxied.
       registrationUrl: this.#config.registrationUrl ?? null,
+      witnesses: this.witnesses,
     };
   }
 }

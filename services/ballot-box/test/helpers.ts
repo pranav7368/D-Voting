@@ -26,6 +26,7 @@ import {
 } from "@dvoting/ledger";
 
 import { BallotBox, credentialFingerprint, type BallotSubmission } from "../src/ballot-box.ts";
+import type { WitnessRoster } from "../src/election-record.ts";
 
 export const GROUP = MODP_2048;
 
@@ -59,6 +60,8 @@ export async function createHarness(
     leaveInSetup?: boolean;
     ledger?: Ledger;
     trustees?: TrusteeSetup;
+    /** Sealed into block 0 when the harness opens the poll. */
+    witnesses?: WitnessRoster;
   } = {},
 ): Promise<Harness> {
   const validatorKeys: ValidatorKeyPair[] = [];
@@ -96,6 +99,7 @@ export async function createHarness(
     },
     ledger,
     sealer: new DistributedSealer(ledger, peers),
+    ...(options.witnesses ? { witnesses: options.witnesses } : {}),
     ...(options.maxPendingBeforeSeal !== undefined
       ? { maxPendingBeforeSeal: options.maxPendingBeforeSeal }
       : {}),

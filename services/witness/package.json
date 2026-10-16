@@ -1,0 +1,22 @@
+{
+  "name": "@dvoting/witness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An independent witness: keeps its own copy of the bulletin board, refuses to vouch for any rewrite or fork, and signs checkpoints voters' devices fetch directly.",
+  "scripts": {
+    "start": "node src/server.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dvoting/crypto": "*",
+    "@dvoting/ledger": "*",
+    "@hono/node-server": "^2.1.0",
+    "hono": "^4.13.8",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@dvoting/ballot-box": "*"
+  }
+}

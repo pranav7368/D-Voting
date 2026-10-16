@@ -16,7 +16,7 @@ import {
   resetForRevote, discardPrepared, checkCode, session, esc, $,
 } from "/voter.js?v=6";
 import { checkLink } from "/check-lib.js?v=1";
-import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=3";
+import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=4";
 import { qrSvg } from "/qrcode.js?v=1";
 import { symbolSvg } from "/symbols.js?v=1";
 

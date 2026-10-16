@@ -9,7 +9,8 @@
  */
 
 import { checkCast, checkCode, checkTested, parseCheckLink } from "/check-lib.js?v=1";
-import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=3";
+import { apply, lang, onLangChange, setLang, t } from "/i18n.js?v=4";
+import { electionFingerprint, gatherWitnessEvidence } from "/verify-lib.js?v=2";
 import { symbolSvg } from "/symbols.js?v=1";
 
 const $ = (id) => document.getElementById(id);
@@ -61,11 +62,29 @@ function render() {
       );
     }
   } else if (result.ok) {
-    setStatus("ok", t("ck.cast"), `<p>${esc(t("ck.castBody", {
+    const recorded = `<p>${esc(t("ck.castBody", {
       block: outcome.receipt.blockHeight,
       sigs: outcome.receipt.attestations.length,
       total: election.validators.length,
-    }))}</p>`);
+    }))}</p>`;
+    const w = outcome.witness;
+    const alarms = (w?.alarms ?? [])
+      .map((a) => `<p class="check-warn">${esc(t("wt.alarm", { w: a.witness, alarm: a.alarm }))}</p>`)
+      .join("");
+    const fingerprint = w?.genesisHash
+      ? `<p class="quiet">${esc(t("wt.fingerprint", { fp: electionFingerprint(w.genesisHash) }))}</p>`
+      : "";
+    if (!w || w.pending) {
+      setStatus("waiting", t("ck.cast"), recorded + `<p>${esc(t("wt.pending"))}</p>` + alarms);
+    } else if (w.total === 0) {
+      setStatus("ok", t("ck.cast"), recorded + `<p class="check-warn">${esc(t("wt.none"))}</p>`);
+    } else if (w.ok) {
+      setStatus("ok", t("ck.cast"), recorded +
+        `<p class="check-yes">${esc(t("wt.confirmed", { k: w.vouched.length, n: w.total, names: w.vouched.join(", ") }))}</p>` +
+        alarms + fingerprint);
+    } else {
+      setStatus("bad", t("wt.failed"), `<p>${esc(t("wt.failedBody"))}</p>` + alarms + fingerprint);
+    }
   } else {
     setStatus("bad", t("ck.castFail"), `<p>${esc(t("ck.castFailBody"))}</p>`);
   }
@@ -97,9 +116,13 @@ async function getJson(path) {
 async function poll() {
   try {
     const { sealedAs } = await getJson(`/v1/bulletin/lookup/${encodeURIComponent(link.ballotId)}`);
-    if (sealedAs === "ballot") {
+    if (outcome?.kind === "cast") {
+      // Already checked; only the observers' confirmation is still awaited.
+      outcome.witness = await witnessEvidence(outcome.receipt);
+    } else if (sealedAs === "ballot") {
       const receipt = await getJson(`/v1/bulletin/ballots/${encodeURIComponent(link.ballotId)}`);
       outcome = { kind: "cast", receipt, result: await checkCast(receipt, election, link) };
+      if (outcome.result.ok) outcome.witness = await witnessEvidence(receipt);
     } else if (sealedAs === "spoiled-ballot") {
       const receipt = await getJson(`/v1/bulletin/audits/${encodeURIComponent(link.ballotId)}`);
       outcome = { kind: "tested", receipt, result: await checkTested(receipt, election, link) };
@@ -109,7 +132,17 @@ async function poll() {
     return;
   }
   render();
-  if (outcome) clearInterval(timer);
+  const awaitingWitnesses = outcome?.kind === "cast" && outcome.result.ok && (!outcome.witness || outcome.witness.pending);
+  if (outcome && !awaitingWitnesses) clearInterval(timer);
+}
+
+/** Ask the observers directly. A failure to reach them reads as still waiting. */
+async function witnessEvidence(receipt) {
+  try {
+    return await gatherWitnessEvidence(receipt);
+  } catch {
+    return null;
+  }
 }
 
 $("lang-toggle").addEventListener("click", () => setLang(lang() === "hi" ? "en" : "hi"));
@@ -136,7 +169,8 @@ if (link && !globalThis.crypto?.subtle) {
     } else {
       render();
       await poll();
-      if (!outcome) timer = setInterval(poll, 3000);
+      const settled = outcome && !(outcome.kind === "cast" && outcome.result.ok && (!outcome.witness || outcome.witness.pending));
+      if (!settled) timer = setInterval(poll, 3000);
     }
   } catch (error) {
     setStatus("warn", t("ck.loadErr", { reason: error.message }), "");
