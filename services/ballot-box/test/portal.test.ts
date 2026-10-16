@@ -23,6 +23,19 @@ describe("public verification portal", () => {
     }
   });
 
+  it("is never in study mode unless the operator turns it on", async () => {
+    // Study mode lets a facilitator's link make the voter page misbehave on
+    // purpose. It must be off by default and announced when on.
+    const { app: server } = await app();
+    assert.equal(((await (await server.request("/v1/election")).json()) as { studyMode: boolean }).studyMode, false);
+
+    const studied = await createHarness({ studyMode: true });
+    const studyServer = createApp({ ballotBox: studied.ballotBox });
+    assert.equal(((await (await studyServer.request("/v1/election")).json()) as { studyMode: boolean }).studyMode, true);
+    const voterJs = await (await studyServer.request("/voter.js")).text();
+    assert.match(voterJs, /session\.election\?\.studyMode === true/, "manipulation must be gated on the server's study flag");
+  });
+
   it("offers a way to re-vote after casting, without re-registering", async () => {
     // Found by manual testing: the backend has always allowed a credential to
     // cast a superseding ballot (last vote counts -- the coercion-mitigation
