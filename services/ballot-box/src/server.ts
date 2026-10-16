@@ -71,6 +71,10 @@ const schema = z.object({
   CHAIN_PATH: z.string().optional(),
   /** Seal a block once this many ballots are pending. */
   BALLOTS_PER_BLOCK: z.coerce.number().int().min(1).default(25),
+  // Seal whatever is pending at least this often, so a voter's receipt (and a
+  // tested ballot their phone is waiting for) never depends on other voters
+  // turning up to fill a block. 0 disables the timer.
+  SEAL_INTERVAL_SECONDS: z.coerce.number().int().min(0).max(3600).default(10),
 
   /** Enables /admin and /v1/admin/*. Omit to disable the admin surface entirely. */
   ADMIN_TOKEN: z.string().min(32).optional(),
@@ -200,6 +204,19 @@ async function main(): Promise<void> {
   // opened, what it was sealed as, and whether voting has ended. This throws
   // rather than starting if the sealed identity disagrees with this process.
   await ballotBox.load();
+
+  if (config.SEAL_INTERVAL_SECONDS > 0) {
+    const timer = setInterval(() => {
+      if (ballotBox.pendingCount === 0) return;
+      ballotBox.sealBlock().catch((error: unknown) => {
+        // Not fatal: the entries stay pending and the next tick retries.
+        console.error("[ballot-box] timed seal failed", {
+          message: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }, config.SEAL_INTERVAL_SECONDS * 1000);
+    timer.unref();
+  }
 
   const app = createApp({
     ballotBox,

@@ -50,9 +50,29 @@ none is a real party's registered symbol, and each may be used once.
 - `voter.js` owns the protocol and `vote-page.js` owns the screen, so the
   cryptographic flow can be reviewed without reading layout code.
 
+## Second-device check
+
+The review step shows a QR code next to the check code, **before** the Cast and
+Test buttons, because the phone must hold the commitment before the voting
+device learns which way the voter will go. The values ride in the URL fragment
+(`/check#e=…&b=…&c=…`), which is never sent to a server.
+
+The phone page (`/check`) shows the same 12-digit code for comparison, then
+waits on the public bulletin board until the ballot is sealed:
+
+- **Tested:** it re-runs the audit from the published randomness and shows
+  "This tested ballot contained: [symbol] Rohit Nair", then asks "Is this
+  exactly what you selected?" with a plain answer for yes and for no.
+- **Cast:** "Recorded exactly as shown". The sealed ballot's ciphertexts match
+  the commitment, under a quorum of signatures. It says the choice stays secret.
+- **Still waiting after 90 seconds:** a warning, because a device that cast a
+  different ballot leaves the scanned one unsealed forever.
+
+The QR encoder is `qrcode-generator` (MIT), pinned and bundled at build time
+into `public/qrcode.js` with a published SHA-256, drawn as SVG paths so it
+renders under the strict CSP.
+
 ## Still to do
 
-- Second-device verification: the check code becomes a QR code that a phone
-  verifies independently of the voting browser.
 - Hindi for the verify, results and public-record pages.
 - An accessibility audit with a screen reader and with real voters (planned user study).

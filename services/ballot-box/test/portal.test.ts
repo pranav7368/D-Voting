@@ -78,6 +78,7 @@ describe("public verification portal", () => {
       ["/verify", "/verify-page.js", []],
       ["/results", "/results-page.js", []],
       ["/chain", "/chain-page.js", []],
+      ["/check", "/check-page.js", []],
     ];
 
     for (const [htmlPath, scriptPath, extraScripts] of pairs) {

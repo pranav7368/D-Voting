@@ -11,7 +11,7 @@
  * service (they are pure reads), leaving the write path isolated.
  */
 
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { z } from "zod";
 import { fromBase64Url, toBase64Url } from "@dvoting/crypto";
 import { blockHash, encodeEntry, type Block } from "@dvoting/ledger";
@@ -107,11 +107,15 @@ export function createApp(options: AppOptions): Hono {
     "/verify": { file: "index.html", type: HTML },
     "/results": { file: "results.html", type: HTML },
     "/chain": { file: "chain.html", type: HTML },
+    "/check": { file: "check.html", type: HTML },
     "/app.css": { file: "app.css", type: "text/css; charset=utf-8" },
     "/vote.css": { file: "vote.css", type: "text/css; charset=utf-8" },
     "/favicon.svg": { file: "favicon.svg", type: "image/svg+xml" },
     "/i18n.js": { file: "i18n.js", type: JS },
     "/symbols.js": { file: "symbols.js", type: JS },
+    "/check-lib.js": { file: "check-lib.js", type: JS },
+    "/check-page.js": { file: "check-page.js", type: JS },
+    "/qrcode.js": { file: "qrcode.js", type: JS },
     "/ballot-hero.png": { file: "ballot-hero.png", type: "image/png" },
     "/verify-lib.js": { file: "verify-lib.js", type: JS },
     "/verify-page.js": { file: "verify-page.js", type: JS },
@@ -301,11 +305,45 @@ export function createApp(options: AppOptions): Hono {
    * Returns the Merkle inclusion proof plus the signed header that commits to
    * the root, so the voter can verify locally without trusting this response.
    */
-  app.get("/v1/bulletin/ballots/:ballotId", async (c) => {
+  app.get("/v1/bulletin/ballots/:ballotId", (c) =>
+    inclusionReceipt(c, "ballot", "No such ballot on the chain."),
+  );
+
+  /**
+   * "Did my test ballot really contain my choice?"
+   *
+   * The same receipt shape, for a ballot the voter tested (Benaloh audit)
+   * instead of casting. Its entry carries the revealed randomness, so a second
+   * device can re-run the audit itself from public data, without trusting the
+   * voting device that produced the ballot.
+   */
+  app.get("/v1/bulletin/audits/:ballotId", (c) =>
+    inclusionReceipt(c, "spoiled-ballot", "No tested ballot with this code is sealed yet."),
+  );
+
+  /**
+   * Has this ballot id been sealed, and as what?
+   *
+   * Lets a second device wait for the voter's decision without a stream of
+   * 404s. Reports only what is already public on the chain: a ballot still
+   * waiting for its block reads as unsealed, exactly as it does on the board.
+   */
+  app.get("/v1/bulletin/lookup/:ballotId", async (c) => {
     const ballotId = c.req.param("ballotId");
-    const located = await ballotBox.ledger.locateEntry("ballot", ballotId);
+    c.header("Cache-Control", "no-store");
+    const sealedAs = (await ballotBox.ledger.hasEntry("ballot", ballotId))
+      ? "ballot"
+      : (await ballotBox.ledger.hasEntry("spoiled-ballot", ballotId))
+        ? "spoiled-ballot"
+        : null;
+    return c.json({ ballotId, sealedAs });
+  });
+
+  async function inclusionReceipt(c: Context, kind: string, missing: string) {
+    const ballotId = c.req.param("ballotId")!;
+    const located = await ballotBox.ledger.locateEntry(kind, ballotId);
     if (!located) {
-      return c.json({ error: "not_found", message: "No such ballot on the chain." }, 404);
+      return c.json({ error: "not_found", message: missing }, 404);
     }
 
     const block = await ballotBox.ledger.getBlock(located.blockHeight);
@@ -328,7 +366,7 @@ export function createApp(options: AppOptions): Hono {
           }))
         : [],
     });
-  });
+  }
 
   // --- Trustee decryption ceremony ------------------------------------------
 

@@ -7,7 +7,7 @@
 <title>Vote · D-Voting</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/app.css?v=5" />
-<link rel="stylesheet" href="/vote.css?v=3" />
+<link rel="stylesheet" href="/vote.css?v=4" />
 </head>
 <body class="page-vote v2" data-stage="identify">
 <a class="skip-link" href="#main-content" data-i18n="skip">Skip to voting</a>
@@ -83,6 +83,15 @@
             <p class="field-help" id="check-code-help" data-i18n="rv.checkHelp">A short code for this exact locked ballot.</p>
             <details class="full-code"><summary data-i18n="rv.fullCode">Full fingerprint</summary><code id="commitment" class="mono"></code></details>
           </div>
+          <div class="qr-panel">
+            <div class="qr-image" id="qr-review"></div>
+            <div class="qr-text">
+              <h3 data-i18n="qr.title">Check this ballot on your phone (recommended)</h3>
+              <p data-i18n="qr.body">Scan this with your phone camera before you cast or test.</p>
+              <p class="quiet" data-i18n="qr.after">Keep the phone page open.</p>
+              <p class="qr-link"><span data-i18n="qr.link">Cannot scan? Open this link on another device:</span> <a id="qr-link-review" href="#" rel="noreferrer" target="_blank"></a></p>
+            </div>
+          </div>
           <div class="row">
             <button id="cast" class="action" type="button"><span data-i18n="rv.cast">Cast my vote</span> <span aria-hidden="true">→</span></button>
             <button id="change-choice" class="action secondary" type="button" data-i18n="rv.change">Change my choice</button>
@@ -106,6 +115,13 @@
           <span class="label-caps" data-i18n="dn.code">Tracking code</span>
           <p class="tracking-code" id="tracking"></p>
           <p class="receipt-print-meta" id="receipt-meta"></p>
+          <div class="qr-panel no-print">
+            <div class="qr-image" id="qr-receipt"></div>
+            <div class="qr-text">
+              <h3 data-i18n="qr.receiptTitle">Confirm on your phone</h3>
+              <p data-i18n="qr.receiptBody">Scan to confirm, on a device you trust, that this exact ballot is in the public record.</p>
+            </div>
+          </div>
           <ol class="timeline" id="timeline">
             <li data-step="received"><strong data-i18n="dn.t.received">Received by the ballot box</strong><span id="t-received"></span></li>
             <li data-step="sealed"><strong data-i18n="dn.t.sealed">Sealed into the public record</strong><span id="t-sealed"></span></li>
@@ -141,6 +157,6 @@
   </div>
 </main>
 <footer class="site-footer no-print"><span>D-Voting</span><span>Private choice. Public proof.</span></footer>
-<script type="module" src="/vote-page.js?v=6"></script>
+<script type="module" src="/vote-page.js?v=7"></script>
 </body>
 </html>

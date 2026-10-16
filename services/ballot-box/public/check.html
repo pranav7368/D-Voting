@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0b1736" />
+<meta name="referrer" content="no-referrer" />
+<title>Check a ballot · D-Voting</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/app.css?v=5" />
+<link rel="stylesheet" href="/vote.css?v=4" />
+</head>
+<body class="page-check v2">
+<header class="site-header">
+  <a class="brand" href="/vote" aria-label="D-Voting home"><span class="brand-mark" aria-hidden="true">D<span>V</span></span><span class="brand-word">D-Voting<small>Second-device check</small></span></a>
+  <button type="button" id="lang-toggle" class="lang-toggle" data-i18n="lang.switch" data-i18n-label="lang.switchLabel">हिंदी</button>
+</header>
+<main id="main-content" class="check-main">
+  <h1 data-i18n="ck.title">Checking a ballot</h1>
+  <p class="stage-lede" data-i18n="ck.lede">This phone reads the public record directly.</p>
+
+  <section class="card form-card" id="code-card" hidden>
+    <span class="label-caps" data-i18n="ck.compare">Your voting screen must show this same code:</span>
+    <p class="check-code-value" id="code"></p>
+    <p class="quiet" id="election"></p>
+  </section>
+
+  <section class="check-status" id="status" data-state="loading" aria-live="polite">
+    <div class="check-status-icon" aria-hidden="true"></div>
+    <div class="check-status-body">
+      <h2 id="status-title"></h2>
+      <div id="status-body"></div>
+    </div>
+  </section>
+
+  <details class="full-code" id="details" hidden>
+    <summary data-i18n="ck.details">Technical details</summary>
+    <ul class="check-steps" id="steps"></ul>
+  </details>
+</main>
+<script type="module" src="/check-page.js?v=3"></script>
+</body>
+</html>
