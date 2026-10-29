@@ -14,6 +14,11 @@
 </p>
 
 <p align="center">
+  <a href="https://d-voting.onrender.com/demo"><b>▶ Try the live demo</b></a> — vote, check your ballot on your phone, and recount the election yourself.<br/>
+  <sub>Free hosting: the first visit after a quiet spell takes about a minute to wake the server, and each restart starts a fresh election.</sub>
+</p>
+
+<p align="center">
   <img src="docs/images/ballot.png" width="64%" alt="The voting page: an EVM-style ballot with party symbols and NOTA">
   &nbsp;
   <img src="docs/images/phone-detects-manipulation.png" width="21%" alt="The phone check exposing a manipulated ballot">
@@ -119,8 +124,12 @@ npm run verify -- --url http://localhost:8082 --witnesses --save board.json
 
 ## Run it in the cloud
 
+**Live:** [d-voting.onrender.com/demo](https://d-voting.onrender.com/demo) — demo
+polling cards, the voting page, ballot verification, the public record and the
+results, all from one address.
+
 The whole system also runs as **one process on one port**, which fits Render's
-free tier and gets the HTTPS the phone check needs.
+free tier and gets the HTTPS the phone check needs. To deploy your own copy:
 
 1. In the [Render dashboard](https://dashboard.render.com) choose **New → Blueprint**
    and select this repository; Render reads [`render.yaml`](render.yaml) and builds the [`Dockerfile`](Dockerfile).
