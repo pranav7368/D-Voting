@@ -1,0 +1,273 @@
+{
+  "environment": {
+    "date": "2026-10-29T11:23:00.045Z",
+    "commit": "c1ca76c",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "logicalCores": 8,
+    "memoryGB": 8,
+    "node": "v24.14.1",
+    "os": "win32 10.0.26300",
+    "mode": "full",
+    "note": "single process, single core, no network latency"
+  },
+  "Device, modp2048, 4 candidates / Prepare ballot (encrypt + proofs + commitment)": {
+    "n": 10,
+    "mean": 168.71352,
+    "median": 159.58460000000014,
+    "p95": 196.04339999999956,
+    "min": 151.67169999999987,
+    "max": 196.04339999999956,
+    "sd": 15.798042081979562
+  },
+  "Device, modp2048, 4 candidates / Verify ballot proofs (any observer, per ballot)": {
+    "n": 10,
+    "mean": 256.86283,
+    "median": 249.9322000000002,
+    "p95": 304.18830000000025,
+    "min": 236.60860000000048,
+    "max": 304.18830000000025,
+    "sd": 22.373061095684275
+  },
+  "Device, modp2048, 4 candidates / Second-device audit of a tested ballot": {
+    "n": 10,
+    "mean": 295.28124000000025,
+    "median": 278.3864000000003,
+    "p95": 366.96600000000035,
+    "min": 253.10660000000007,
+    "max": 366.96600000000035,
+    "sd": 39.36491519666282
+  },
+  "Device, modp2048, 8 candidates / Prepare ballot (encrypt + proofs + commitment)": {
+    "n": 5,
+    "mean": 334.51443999999975,
+    "median": 325.8274000000001,
+    "p95": 391.27959999999985,
+    "min": 310.1093000000001,
+    "max": 391.27959999999985,
+    "sd": 32.86180467614346
+  },
+  "Device, modp2048, 8 candidates / Verify ballot proofs (any observer, per ballot)": {
+    "n": 5,
+    "mean": 477.84626000000026,
+    "median": 477.1733999999997,
+    "p95": 500.39670000000115,
+    "min": 463.4261999999999,
+    "max": 500.39670000000115,
+    "sd": 13.890189076575322
+  },
+  "Device, modp2048, 8 candidates / Second-device audit of a tested ballot": {
+    "n": 5,
+    "mean": 509.4257600000004,
+    "median": 508.4240000000027,
+    "p95": 530.3486999999986,
+    "min": 498.3636000000006,
+    "max": 530.3486999999986,
+    "sd": 13.052531190270738
+  },
+  "Device, modp3072, 4 candidates / Prepare ballot (encrypt + proofs + commitment)": {
+    "n": 5,
+    "mean": 510.35779999999943,
+    "median": 516.8394999999982,
+    "p95": 519.3917000000001,
+    "min": 487.1660000000011,
+    "max": 519.3917000000001,
+    "sd": 13.2761871454112
+  },
+  "Device, modp3072, 4 candidates / Verify ballot proofs (any observer, per ballot)": {
+    "n": 5,
+    "mean": 735.8741399999999,
+    "median": 707.2497000000003,
+    "p95": 816.3094999999994,
+    "min": 703.8767999999982,
+    "max": 816.3094999999994,
+    "sd": 48.04653082724109
+  },
+  "Device, modp3072, 4 candidates / Second-device audit of a tested ballot": {
+    "n": 5,
+    "mean": 787.9933800000006,
+    "median": 793.2727999999988,
+    "p95": 818.9227000000028,
+    "min": 744.000600000003,
+    "max": 818.9227000000028,
+    "sd": 27.33344196752327
+  },
+  "System / Ballot box admission (credential + proofs + duplicate checks)": {
+    "n": 40,
+    "mean": 209.13166249999995,
+    "median": 200.90129999999772,
+    "p95": 239.07450000000244,
+    "min": 186.64710000000196,
+    "max": 371.71229999999923,
+    "sd": 30.291470294810324
+  },
+  "System / Seal one block: 4 validators each re-verify the ballot and sign": {
+    "n": 40,
+    "mean": 420.69497000000035,
+    "median": 402.8323999999993,
+    "p95": 486.150999999998,
+    "min": 378.8064999999988,
+    "max": 526.3346999999994,
+    "sd": 38.22356754825532
+  },
+  "System / Witness: fetch, validate and countersign one new block": {
+    "n": 40,
+    "mean": 2.8505099999999404,
+    "median": 2.3932999999960884,
+    "p95": 3.7066999999951804,
+    "min": 1.8764999999984866,
+    "max": 11.880499999999302,
+    "sd": 1.6031771213627668
+  },
+  "Phone (second device) / Check a cast ballot (inclusion + quorum + commitment)": {
+    "n": 20,
+    "mean": 3.5500499999994646,
+    "median": 3.3487999999997555,
+    "p95": 4.382900000004156,
+    "min": 2.534399999996822,
+    "max": 5.552199999998265,
+    "sd": 0.7437096600301583
+  },
+  "Phone (second device) / Check a tested ballot (re-run the audit from public data)": {
+    "n": 5,
+    "mean": 240.47736000000296,
+    "median": 237.08190000000468,
+    "p95": 253.03010000000359,
+    "min": 230.81119999999646,
+    "max": 253.03010000000359,
+    "sd": 8.593507183799286
+  },
+  "Phone (second device) / Witness confirmation (3 checkpoints, headers to head)": {
+    "n": 20,
+    "mean": 5.573655000000872,
+    "median": 5.833600000012666,
+    "p95": 6.501600000003236,
+    "min": 4.01830000001064,
+    "max": 7.531399999992573,
+    "sd": 0.8693549178158365
+  },
+  "Sizes / Ballot on the board (JSON, mean)": [
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396,
+    12396
+  ],
+  "Sizes / Inclusion receipt fetched by a device": "17428 bytes",
+  "Sizes / Witness checkpoint": "323 bytes",
+  "Sizes / QR link (check page)": "118 characters",
+  "Sizes / Block header (canonical)": "149 bytes",
+  "Tally / Trustee partial decryptions (3 trustees x 3 totals)": "216 ms",
+  "Tally / Discrete-log table for up to 100,000 votes per candidate": "129 ms",
+  "Independent audit / dvoting-verify on the full board (40 ballots, recount + witnesses)": {
+    "n": 2,
+    "mean": 8994.136949999993,
+    "median": 8714.686499999996,
+    "p95": 9273.58739999999,
+    "min": 8714.686499999996,
+    "max": 9273.58739999999,
+    "sd": 395.2026164012597
+  },
+  "Independent audit / Audit verdict": "VERIFIED",
+  "Independent audit / Audit cost per ballot": "218 ms",
+  "Independent audit / Exported board size per ballot": "20210 bytes",
+  "Witness check vs. chain length / Ballot 9 blocks below the witnessed head": {
+    "n": 5,
+    "mean": 1.758259999996517,
+    "median": 1.5691999999980908,
+    "p95": 2.790499999988242,
+    "min": 1.4104999999981374,
+    "max": 2.790499999988242,
+    "sd": 0.5827559206009251
+  },
+  "Witness check vs. chain length / Ballot 99 blocks below the witnessed head": {
+    "n": 5,
+    "mean": 7.891520000004675,
+    "median": 7.998500000001513,
+    "p95": 8.371400000003632,
+    "min": 7.379700000004959,
+    "max": 8.371400000003632,
+    "sd": 0.3913377467079125
+  },
+  "Witness check vs. chain length / Ballot 999 blocks below the witnessed head": {
+    "n": 5,
+    "mean": 62.71912000000011,
+    "median": 51.81180000001041,
+    "p95": 99.87939999999071,
+    "min": 46.017500000001746,
+    "max": 99.87939999999071,
+    "sd": 21.889274187986047
+  },
+  "Witness check vs. chain length / Ballot 4999 blocks below the witnessed head": {
+    "n": 5,
+    "mean": 260.13270000000193,
+    "median": 266.3229999999894,
+    "p95": 297.97320000000764,
+    "min": 233.1536000000051,
+    "max": 297.97320000000764,
+    "sd": 26.39082444108113
+  },
+  "scaling": {
+    "method": "linear extrapolation from measured per-ballot medians; audit parallelises across ballots",
+    "perBallotAudit": 217.8671624999999,
+    "perBallotIngest": 603.733699999997,
+    "perBallotBytes": 20210.175,
+    "rows": [
+      {
+        "ballots": 1000,
+        "auditSingleCoreMin": 3.631119374999998,
+        "auditAllCoresMin": 0.45388992187499977,
+        "boardMB": 20.210175,
+        "ingestOneBallotPerBlockHours": 0.16770380555555472
+      },
+      {
+        "ballots": 10000,
+        "auditSingleCoreMin": 36.31119374999999,
+        "auditAllCoresMin": 4.538899218749998,
+        "boardMB": 202.10175,
+        "ingestOneBallotPerBlockHours": 1.6770380555555473
+      },
+      {
+        "ballots": 100000,
+        "auditSingleCoreMin": 363.11193749999984,
+        "auditAllCoresMin": 45.38899218749998,
+        "boardMB": 2021.0175,
+        "ingestOneBallotPerBlockHours": 16.770380555555473
+      }
+    ]
+  }
+}

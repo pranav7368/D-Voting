@@ -86,7 +86,7 @@ npm run bench                                    # performance numbers
 
 ---
 
-## 3. Run a real election yourself (eleven processes)
+## 3. Run a real election yourself (fourteen processes)
 
 ```bash
 npm run dev           # or: node scripts/dev-up.ts 20
@@ -285,3 +285,49 @@ there is no safe way to guess which.
 
 Every one of those ends with a **Known Limitations** section. Those are the most
 useful pages to read before a viva — they are where the honest answers are.
+
+## 7. Running the services separately
+
+### The Registration Authority with PostgreSQL
+
+```bash
+
+### Walk through the voter's side
+
+With the service running:
+
+```bash
+node services/registration/src/scripts/demo-voter.ts
+```
+
+This walks through the voter's side step by step — fetching and **pinning** the
+issuer key, registering, blinding a credential locally, getting it signed,
+unblinding, and verifying. Run it twice with the same document number to watch
+the double-issuance defence refuse the second attempt.
+
+### Validators as separate processes
+
+Each authority generates its own key on its own machine and publishes only the
+public half:
+
+```bash
+node services/validator/src/scripts/generate-validator-key.ts election-commission
+```
+
+Then each runs a node, sharing only the public validator set:
+
+```bash
+VALIDATOR_ID=election-commission \
+ELECTION_ID=dvoting-general-2026 \
+VALIDATOR_PRIVATE_KEY=<from keygen stdout> \
+VALIDATOR_SET='{"validators":[{"id":"...","publicKey":"..."}, ...]}' \
+PROPOSE_TOKEN=<32+ char shared secret> \
+CHAIN_PATH=./chain.jsonl \
+PORT=8090 \
+npm start --workspace @dvoting/validator-node
+```
+
+`CHAIN_PATH` gives durable, crash-safe storage and is **required** when
+`NODE_ENV=production` — without it a restart loses the election record. On
+startup a node re-verifies its whole chain and refuses to serve if verification
+fails, so a corrupted chain cannot be laundered into the quorum.

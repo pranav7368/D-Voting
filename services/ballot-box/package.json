@@ -12,8 +12,8 @@
   "dependencies": {
     "@dvoting/crypto": "*",
     "@dvoting/ledger": "*",
-    "@hono/node-server": "^2.1.0",
-    "hono": "^4.13.8",
-    "zod": "^3.24.1"
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
   }
 }

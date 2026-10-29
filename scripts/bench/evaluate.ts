@@ -4,7 +4,7 @@
  *   node scripts/bench/evaluate.ts            # full run (~10 min on a laptop)
  *   node scripts/bench/evaluate.ts --quick    # smoke run (~1 min)
  *
- * Writes papers/evaluation/results.json and papers/evaluation/results.md.
+ * Writes docs/evaluation/results.json and docs/evaluation/results.md.
  *
  * Everything runs in ONE Node process on ONE core, through the real code
  * paths: the ballot box, four independent validator nodes (each re-verifying
@@ -343,7 +343,7 @@ for (const r of scaling) {
 
 // --- write ----------------------------------------------------------------------
 
-const outDir = join(root, "papers", "evaluation");
+const outDir = join(root, "docs", "evaluation");
 await mkdir(outDir, { recursive: true });
 await writeFile(join(outDir, quick ? "results-quick.json" : "results.json"), `${JSON.stringify(results, null, 2)}\n`);
 
@@ -364,4 +364,4 @@ md.push("| Ballots | Audit, 1 core (min) | Audit, 8 cores, projected (min) | Boa
 for (const r of scaling) md.push(`| ${r.ballots.toLocaleString("en-US")} | ${r.auditSingleCoreMin.toFixed(1)} | ${r.auditAllCoresMin.toFixed(1)} | ${r.boardMB.toFixed(0)} |`);
 md.push("");
 await writeFile(join(outDir, quick ? "results-quick.md" : "results.md"), md.join("\n"));
-console.log(`\nWrote papers/evaluation/${quick ? "results-quick" : "results"}.{json,md}`);
+console.log(`\nWrote docs/evaluation/${quick ? "results-quick" : "results"}.{json,md}`);
