@@ -422,15 +422,27 @@ export async function verifyElection(
 
   // The tally's trustee roster must be the one sealed before voting -- a
   // result decrypted by keys nobody committed to proves nothing.
-  const sealedShares = sharesKey(record.trustees.publicShares);
-  const publishedShares = sharesKey(published.publicShares ?? []);
-  if (sealedShares !== publishedShares || published.threshold !== record.trustees.threshold) {
-    return fail(
-      "Result uses the sealed trustee roster",
-      "the trustee shares or threshold in the result differ from those sealed in block 0",
-    );
+  // The ceremony publishes only the CONTRIBUTING trustees' shares (any k of
+  // n), so the rule is: each published share is exactly the sealed share for
+  // that trustee, none repeats, and there are at least k of them.
+  const sealedByIndex = new Map(record.trustees.publicShares.map((s) => [s.index, s.publicShare]));
+  const publishedShares = published.publicShares ?? [];
+  const indices = new Set(publishedShares.map((s) => s.index));
+  const forged = publishedShares.find((s) => sealedByIndex.get(s.index) !== s.publicShare);
+  if (published.threshold !== record.trustees.threshold) {
+    return fail("Result uses the sealed trustee roster", `the result claims a ${published.threshold}-of-n threshold, block 0 sealed ${record.trustees.threshold}`);
   }
-  checks.push({ label: "Result uses the sealed trustee roster", ok: true });
+  if (forged) {
+    return fail("Result uses the sealed trustee roster", `trustee ${forged.index}'s share is not the one sealed in block 0`);
+  }
+  if (indices.size !== publishedShares.length || indices.size < record.trustees.threshold) {
+    return fail("Result uses the sealed trustee roster", `${indices.size} distinct trustee shares, ${record.trustees.threshold} required`);
+  }
+  checks.push({
+    label: "Result uses the sealed trustee roster",
+    ok: true,
+    detail: `trustees ${[...indices].sort((a, b) => a - b).join(", ")} of ${record.trustees.total}`,
+  });
 
   const recount = await verifyPublishedTally(ledger, election, publicKey, published);
   checks.push(...recount.checks);
@@ -466,13 +478,6 @@ function findEntry(
     if (entry) return { height: block.header.height, data: entry.data };
   }
   return null;
-}
-
-function sharesKey(shares: readonly { index: number; publicShare: string }[]): string {
-  return [...shares]
-    .map((share) => `${share.index}:${share.publicShare}`)
-    .sort()
-    .join(",");
 }
 
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {

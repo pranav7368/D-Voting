@@ -21,3 +21,7 @@ Thumbs.db
 
 # Local educational notes; keep the public repository English-first
 PROJECT-GUIDE-HINGLISH.md
+
+# Tool output that is not part of the project
+.playwright-mcp/
+~$*

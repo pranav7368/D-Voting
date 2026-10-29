@@ -22,6 +22,8 @@ import {
 } from "@dvoting/ledger";
 import { FileBlockStore } from "@dvoting/ledger/file-store";
 
+import { createBallotEntryValidator } from "@dvoting/ballot-box/src/entry-validator.ts";
+
 import { createValidatorApp } from "./app.ts";
 
 interface ValidatorSetFile {
@@ -90,7 +92,14 @@ async function main(): Promise<void> {
     console.log(`[validator:${validatorId}] loaded ${report.blockCount} block(s) from ${chainPath}`);
   }
 
-  const node = new ValidatorNode({ identity, privateKey, ledger });
+  // Re-verify every cast ballot's proofs against the election sealed on this
+  // node's own replica before attesting (see ballot-box/src/entry-validator.ts).
+  const node = new ValidatorNode({
+    identity,
+    privateKey,
+    ledger,
+    validateEntry: createBallotEntryValidator(ledger, electionId),
+  });
 
   const port = Number(process.env.PORT ?? 8090);
   const app = createValidatorApp({ node, proposeToken });

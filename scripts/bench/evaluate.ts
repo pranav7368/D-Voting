@@ -149,7 +149,7 @@ const roster = {
   quorum: 2,
   witnesses: witnessKeys.map((k) => ({ id: k.identity.id, publicKey: toBase64Url(k.identity.publicKey), url: `http://${k.identity.id}.test` })),
 };
-const harness = await createHarness({ witnesses: roster });
+const harness = await createHarness({ witnesses: roster, verifyingValidators: true });
 const app = createApp({ ballotBox: harness.ballotBox });
 const boxFetch = (async (input: string | URL | Request) => {
   const url = new URL(String(input), "http://box.test");
@@ -197,10 +197,10 @@ for (let i = 0; i < N; i++) {
 }
 const sys = "System";
 record(sys, "Ballot box admission (credential + proofs + duplicate checks)", stat(castMs));
-// The in-process harness validators run consensus only; deployed validators
-// (services/validator) also re-verify each ballot, adding one "Verify ballot
-// proofs" per ballot on each validator, in parallel on their own machines.
-record(sys, "Seal one block: 4 validators sign (consensus only, see note)", stat(sealMs));
+// Each validator re-verifies the ballot against its own replica before
+// signing (ballot-box/src/entry-validator.ts); here they run in one process,
+// one after another. Deployed on separate machines they run in parallel.
+record(sys, "Seal one block: 4 validators each re-verify the ballot and sign", stat(sealMs));
 record(sys, "Witness: fetch, validate and countersign one new block", stat(syncMs));
 
 // tested ballots, for the phone's tested-ballot check

@@ -89,7 +89,7 @@ function definition([term, value]) {
 
 async function refresh() {
   try {
-    render(await call("/v1/status"));
+    render(await call("v1/status"));
   } catch (error) {
     setMessage($("action-msg"), error.message, "bad");
   }
@@ -103,7 +103,7 @@ $("connect").addEventListener("click", async () => {
   }
   token = value;
   try {
-    const status = await call("/v1/status");
+    const status = await call("v1/status");
     $("auth-card").hidden = true;
     $("console").hidden = false;
     render(status);
@@ -126,7 +126,7 @@ $("participate").addEventListener("click", async () => {
   setMessage($("action-msg"), "Downloading the chain and re-verifying it...", "busy");
 
   try {
-    const result = await call("/v1/participate", { method: "POST" });
+    const result = await call("v1/participate", { method: "POST" });
     for (const check of result.verified ?? []) {
       const li = document.createElement("li");
       li.textContent = check;

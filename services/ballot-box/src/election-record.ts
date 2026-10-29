@@ -280,7 +280,9 @@ export function validateWitnessRoster(roster: unknown): WitnessRoster {
     if (url.protocol !== "https:" && url.protocol !== "http:") {
       throw new ElectionRecordError(`witness "${w.id}": url must be http(s)`);
     }
-    return { id: w.id, publicKey: w.publicKey, url: url.origin };
+    // Origin plus path: a witness may be served under a prefix (one public
+    // host fronting several observers), but never with a query or fragment.
+    return { id: w.id, publicKey: w.publicKey, url: url.origin + url.pathname.replace(/\/+$/, "") };
   });
   const quorum = value.quorum;
   if (typeof quorum !== "number" || !Number.isInteger(quorum) || quorum < 1 || quorum > witnesses.length) {

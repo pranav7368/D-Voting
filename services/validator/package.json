@@ -11,6 +11,7 @@
     "keygen": "node src/scripts/generate-validator-key.ts"
   },
   "dependencies": {
+    "@dvoting/ballot-box": "*",
     "@dvoting/crypto": "*",
     "@dvoting/ledger": "*",
     "@hono/node-server": "^2.1.0",

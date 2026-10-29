@@ -22,7 +22,7 @@ up in it.
 ## 1. Run the test suite
 
 ```bash
-npm test              # 577 tests across eight workspaces
+npm test              # 583 tests across eight workspaces
 ```
 
 Per package, if you want to narrow it down:

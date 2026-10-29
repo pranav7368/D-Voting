@@ -1,0 +1,19 @@
+# Render Blueprint: one free web service running the hosted demo.
+# Deploy: Render dashboard -> New -> Blueprint -> select this repository.
+# Render sets RENDER_EXTERNAL_URL, which the demo uses as its public address,
+# and provides HTTPS, which the phone check needs.
+services:
+  - type: web
+    name: d-voting
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: ROLL_ADMIN_TOKEN
+        generateValue: true
+      - key: DEMO_VOTERS
+        value: "200"

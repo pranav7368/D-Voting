@@ -1,17 +1,67 @@
-# D-Voting
+<h1 align="center">D-Voting</h1>
 
-A cryptographically secure, blockchain-audited e-voting system.
+<p align="center">
+  <b>End-to-end verifiable electronic voting that an ordinary voter can check —<br/>
+  with a phone that audits the ballot, and witnesses that keep the bulletin board honest.</b>
+</p>
 
-The security guarantees come from an **end-to-end verifiable (E2E-V) cryptographic
-protocol** in the Helios tradition. The permissioned blockchain is an
-**audit/tamper-evidence layer**, not the source of ballot secrecy or integrity.
-That split is deliberate: MIT/Harvard research (Park, Specter, Narula, Rivest,
-2021) shows that treating a blockchain as the security mechanism for voting
-produces undetectable, nation-scale failure modes.
+<p align="center">
+  <img alt="Node.js 22.18+" src="https://img.shields.io/badge/node-%E2%89%A522.18-339933?logo=node.js&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-no%20build%20step-3178C6?logo=typescript&logoColor=white">
+  <img alt="583 tests passing" src="https://img.shields.io/badge/tests-583%20passing-2ea44f">
+  <img alt="No third-party crypto" src="https://img.shields.io/badge/crypto%20deps-none-6f42c1">
+  <a href="https://render.com/deploy?repo=https://github.com/pranav7368/D-Voting"><img alt="Deploy to Render" src="https://img.shields.io/badge/deploy-Render-46E3B7?logo=render&logoColor=white"></a>
+</p>
 
-> **Status:** a whole election runs end to end from a browser — the commission
-> composes and opens it, voters cast, the poll closes, and a threshold of
-> independent trustees unlocks the count. See [Roadmap](#roadmap).
+<p align="center">
+  <img src="reports/figures/02-ballot.png" width="62%" alt="The EVM-style ballot with party symbols and NOTA">
+  &nbsp;
+  <img src="reports/figures/11-phone-detects-manipulation.png" width="22%" alt="The phone detecting a manipulated ballot">
+</p>
+
+D-Voting is an end-to-end verifiable (E2E-V) voting system in the Helios
+tradition. Ballots are encrypted in the voter's browser, eligibility comes from
+blind-signed credentials that cannot be linked to the voter, a permissioned
+ledger of four validators records every ballot tamper-evidently, and three of
+five trustees decrypt only the totals. Anyone can recount the result.
+
+It removes the two trust assumptions that usually survive in practice:
+
+| Usually trusted | D-Voting |
+|---|---|
+| **The voting device checks itself.** The Benaloh "test this ballot" is run by the same browser that made the ballot, so a compromised one just says *passed*. | **A phone checks it.** The review screen shows a QR code *before* the voter decides; the phone reads the sealed ballot from the public record, re-runs the audit itself and names the candidate from the sealed election definition. |
+| **The bulletin board is read through the server.** A dishonest server can show one voter a private board on which every check succeeds. | **Witnesses vouch for it.** Party agents and an observer keep their own replicas, refuse to sign any rewrite or fork, and sign checkpoints the voter's device fetches **directly**. A receipt counts only when 2 of 3 witness heads are reachable from it. |
+
+The blockchain is an **audit and tamper-evidence layer**, not the source of
+secrecy or integrity — deliberately, following Park, Specter, Narula and Rivest
+(2021), who show that treating a blockchain as the security mechanism for voting
+produces undetectable failures.
+
+**Contents:** [Live demo](#live-demo-on-render) · [Quick start](#quick-start) ·
+[Results](#results) · [Project report and paper](#project-report-and-paper) ·
+[How it works](#the-four-parties-and-what-each-one-can-see) · [API](#api) ·
+[Security](#security-posture) · [Layout](#layout)
+
+---
+
+## Live demo on Render
+
+The whole system — Registration Authority, ballot box, 4 validators, 3 witnesses
+and 5 trustees — also runs as **one process on one port** (about 70 MB), which
+fits Render's free tier and gets the HTTPS the phone check needs.
+
+1. In the [Render dashboard](https://dashboard.render.com), choose **New → Blueprint** and pick this repository.
+   Render reads [`render.yaml`](render.yaml) and builds the [`Dockerfile`](Dockerfile).
+2. When the deploy is live, open **Logs**: the start-up log prints the public
+   address, the commission token, the five trustee console links and sample polling cards.
+3. Open `https://<your-service>.onrender.com/demo` — it links to every part of the
+   election, which opens automatically with 200 demonstration voters.
+
+The free tier sleeps after 15 idle minutes and keeps nothing across restarts:
+each start is a fresh election with fresh keys. Run the same thing locally with
+`node deploy/hosted.ts` (port 10000) or `docker build -t dvoting . && docker run -p 10000:10000 dvoting`.
+Running every party in one process demonstrates the protocol, not the
+independence between parties; for that, use `npm run dev` or separate machines.
 
 ---
 
@@ -149,13 +199,13 @@ Full instructions, all verified on a clean checkout, are in
 ```bash
 npm install
 npm run build:web # bundle the crypto library for the browser
-npm test          # 577 tests across eight workspaces
+npm test          # 583 tests across eight workspaces
 npm run demo      # a complete election, narrated, in ~20s
-npm run dev       # the real system: 11 processes + the web interface
+npm run dev       # the real system: 14 processes + the web interface
 ```
 
-`npm run dev` starts four validators, five trustees, the Registration Authority
-and the ballot box — and deliberately leaves the election **unopened**, because
+`npm run dev` starts four validators, five trustees, three witnesses, the
+Registration Authority and the ballot box — and deliberately leaves the election **unopened**, because
 composing it, freezing the roll and sealing it to the chain is the part that
 makes this an election rather than a demonstration. It prints every console URL
 and token.
@@ -272,19 +322,33 @@ the double-issuance defence refuse the second attempt.
 
 ---
 
-## Performance
+## Results
 
-Measured at 3072-bit, 4 candidates. Ballot casting runs on the voter's device,
-so its cost is a usability constraint, not a vanity metric.
+Medians on one core of an Intel i5-1135G7 laptop (Node 24, no network latency).
+Regenerate everything with `node scripts/bench/evaluate.ts`; full tables in
+[`papers/evaluation/results.md`](papers/evaluation/results.md).
 
-| Operation | Time | Notes |
-|---|---|---|
-| `createBallot` | **485 ms** | on the voter's phone |
-| `verifyBallot` | **730 ms** | per observer, per ballot |
-| `partialDecrypt` | 98 ms | per trustee, per race |
-| `homomorphicTally` | <1 ms | 10 ballots |
+| Operation | 2048-bit | 3072-bit |
+|---|---:|---:|
+| Prepare a ballot on the voter's device (4 candidates) | 160 ms | 517 ms |
+| Verify a ballot's proofs (any observer) | 250 ms | 707 ms |
+| Ballot-box admission | 201 ms | |
+| Seal a block, 4 validators each re-verifying the ballot | 403 ms | |
+| Phone: confirm a cast ballot | 3.35 ms | |
+| Phone: re-run a tested ballot's audit | 237 ms | |
+| Phone: confirm 3 witness checkpoints | 5.83 ms | |
+| Independent audit, per ballot (recount + witnesses) | 218 ms | |
 
-These are 3.8–4.0× faster than the naive implementation. The largest win came
+<p align="center"><img src="reports/charts/device-costs.png" width="80%" alt="Voter-device costs by group size and number of candidates"></p>
+
+A full ten-ballot election on the hosted deployment was recounted by the
+standalone verifier against the live service and its witnesses: every check
+passed and the result matched.
+
+### Why it is fast enough
+
+Ballot casting runs on the voter's device, so its cost is a usability
+constraint, not a vanity metric. The optimised code is 3.8–4.0× faster than the naive implementation. The largest win came
 from noticing that the subgroup membership check was doing a full modular
 exponentiation (`v^q mod p`) on every ciphertext and proof commitment — roughly
 30 extra modexps per ballot verification. Since `p` is prime, that check is
@@ -292,6 +356,21 @@ exactly the **Legendre symbol**, computable via Jacobi in `O(log² p)`. Sliding-
 window exponentiation and adaptive fixed-base precomputation for `g` and `y`
 supplied the rest. All three are verified against independent reference
 implementations.
+
+---
+
+## Project report and paper
+
+| Document | What it is |
+|---|---|
+| [`reports/D-Voting-Project-Report.pdf`](reports/D-Voting-Project-Report.pdf) | M.Tech project report, print-ready (A4, SRM format); [Word version](reports/D-Voting-Project-Report.docx) |
+| [`papers/D-Voting-Research-Paper.pdf`](papers/D-Voting-Research-Paper.pdf) | Research paper: second-device checking and witnessed bulletin boards |
+| [`papers/evaluation/results.md`](papers/evaluation/results.md) | Every measured number, with the machine it came from |
+| [`docs/user-study/`](docs/user-study/) | Protocol, consent, scripts and analysis plan for the N = 30 user study |
+
+The report is generated from source: `python reports/make_charts.py`, then
+`node reports/build_report.mjs`, then `reports/export_pdf.ps1` (Microsoft Word
+fills the table of contents and exports the PDF).
 
 ---
 

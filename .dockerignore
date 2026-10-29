@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.git
+.github
+.local
+.playwright-mcp
+papers
+reports
+docs
+scripts
+*.md
+!services/**/*.md
+**/test
+**/bench
+coverage
+.env
+.env.*

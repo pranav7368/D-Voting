@@ -20,5 +20,8 @@
     "@dvoting/crypto": "*",
     "@dvoting/ledger": "*",
     "@dvoting/registration-authority": "*"
+  },
+  "devDependencies": {
+    "@dvoting/trustee": "*"
   }
 }

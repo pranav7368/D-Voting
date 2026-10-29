@@ -27,6 +27,7 @@ import {
 
 import { BallotBox, credentialFingerprint, type BallotSubmission } from "../src/ballot-box.ts";
 import type { WitnessRoster } from "../src/election-record.ts";
+import { createBallotEntryValidator } from "../src/entry-validator.ts";
 
 export const GROUP = MODP_2048;
 
@@ -63,6 +64,12 @@ export async function createHarness(
     /** Sealed into block 0 when the harness opens the poll. */
     witnesses?: WitnessRoster;
     studyMode?: boolean;
+    /**
+     * Validators re-verify every ballot before attesting, as deployed ones
+     * do. Off by default only to keep the suite fast; the benchmark and the
+     * validator tests turn it on.
+     */
+    verifyingValidators?: boolean;
   } = {},
 ): Promise<Harness> {
   const validatorKeys: ValidatorKeyPair[] = [];
@@ -73,12 +80,17 @@ export async function createHarness(
 
   // Each validator gets its OWN ledger replica.
   const nodes = validatorKeys.map(
-    (keyPair) =>
-      new ValidatorNode({
+    (keyPair) => {
+      const replica = new Ledger(new InMemoryBlockStore(), validatorSet, ELECTION.electionId);
+      return new ValidatorNode({
         identity: keyPair.identity,
         privateKey: keyPair.privateKey,
-        ledger: new Ledger(new InMemoryBlockStore(), validatorSet, ELECTION.electionId),
-      }),
+        ledger: replica,
+        ...(options.verifyingValidators
+          ? { validateEntry: createBallotEntryValidator(replica, ELECTION.electionId) }
+          : {}),
+      });
+    },
   );
   const peers = nodes.map((node) => new LocalValidatorPeer(node));
 
